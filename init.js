@@ -3,11 +3,11 @@ import * as commonUtil from "./util.common.js";
 import * as targetUtil from "./util.target.js";
 
 export async function main(ns) {
-	// launch first attack wave
-	ns.run(commonUtil.getAttackScript(ns), 4, 2, 0);
-
 	// start the watcher
 	ns.run(commonUtil.getWatcherScript(ns));
+
+	// launch first attack wave
+	ns.run(commonUtil.getAttackScript(ns), 4, 2, 0);
 
 	// run purchase script to purchase scripts
 	ns.run(commonUtil.getScriptsPurchaseScript(ns));
