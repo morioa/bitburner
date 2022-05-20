@@ -9,10 +9,10 @@ export async function main(ns) {
 	// launch first attack wave
 	ns.run(commonUtil.getAttackScript(ns), 4, 2, 0);
 
-	// run purchase script to purchase scripts
+	// purchase scripts
 	ns.run(commonUtil.getScriptsPurchaseScript(ns));
 
-	// run purchase script to purchase servers
+	// purchase servers
 	// uncomment this if in early game where you do not gain
 	// funds quickly, otherwise later in the game it's best
 	// to wait to buy the servers until we have purchased
