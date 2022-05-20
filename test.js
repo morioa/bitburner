@@ -34,6 +34,7 @@ export async function main(ns) {
         ns.tprint("Host: '" + host + "' " + ((matched) ? "matched" : "not matched"));
     }
 
+    //commonUtil.showNotice(ns, "New target exists: fulcrumassets");
 
 	//await ns.sleep(30000);
 }

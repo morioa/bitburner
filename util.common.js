@@ -107,3 +107,18 @@ export function findProcessByName(ns, name, host, kill = false) {
 export function formatMoney(ns, money) {
 	return "$" + parseInt(money).toString().replace(/(.)(?=(\d{3})+$)/g,'$1,');
 }
+
+export function showNotice(ns, message, title = "notice") {
+	let lineChar = "=";
+	let titleLine = "==[" + title.toUpperCase() + "]==";
+	let messageLine = ">>>  " + message + "  <<<";
+	let lineLength = (titleLine.length > messageLine.length)
+		? titleLine.length
+		: messageLine.length;
+
+	let output = "\n\n" +
+		titleLine + lineChar.repeat(lineLength - titleLine.length) + "\n" +
+		messageLine + "\n" +
+		lineChar.repeat(lineLength) + "\n\n";
+	ns.tprint(output);
+}

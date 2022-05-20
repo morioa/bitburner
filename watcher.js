@@ -19,15 +19,7 @@ export async function main(ns) {
 function newTarget(ns) {
 	let nextTarget = targetUtil.getLastHackableHost(ns)["host"];
 	if (nextTarget !== prevTarget) {
-		let lineChar = "=";
-		let topLine = "==[ACHIEVEMENT]===========";
-		let midLine = ">>>  New target exists: " + nextTarget + "  <<<";
-		let botLine = "==========================";
-
-		let output = "\n\n" + topLine + lineChar.repeat(midLine.length - topLine.length) + "\n" +
-			midLine + "\n" +
-			botLine + lineChar.repeat(midLine.length - topLine.length) + "\n";
-		ns.tprint(output);
+		commonUtil.showNotice(ns, "New target exists: " + nextTarget);
 		prevTarget = nextTarget;
 	}
 }
