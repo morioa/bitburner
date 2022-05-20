@@ -1,16 +1,22 @@
 /** @param {NS} ns */
-import * as common from "./util.common.js";
-import * as targets from "./util.targets.js";
+import * as commonUtil from "./util.common.js";
+import * as targetUtil from "./util.target.js";
 
 export async function main(ns) {
-	let target = targets.getLastHackableHost(ns).host;
+	// launch first attack wave
+	ns.run(commonUtil.getAttackScript(ns), 4, 2, 0);
 
-	// run from "home" first to establish breach
-	await ns.run(common.getLocalAttackScript(ns), 1, target);
+	// start the watcher
+	ns.run(commonUtil.getWatcherScript(ns));
+
+	// run purchase script to purchase scripts
+	ns.run(commonUtil.getScriptsPurchaseScript(ns));
 
 	// run purchase script to purchase servers
-	ns.run(common.getServerPurchaseScript(ns));
-
-	// run remote attacks on all servers already purchased
-	ns.run(common.getRemoteAttackScript(ns));
+	// uncomment this if in early game where you do not gain
+	// funds quickly, otherwise later in the game it's best
+	// to wait to buy the servers until we have purchased
+	// all scripts from the darkweb -- it's easily affordable
+	// and will yield a LOT more attackable targets quickly
+	//ns.run(commonUtil.getServerPurchaseScript(ns));
 }

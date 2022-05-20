@@ -1,47 +1,48 @@
 /** @param {NS} ns **/
-import * as common from "./util.common.js";
-import * as breach from "./util.breach.js";
-import * as targets from "./util.targets.js";
+import * as commonUtil from "./util.common.js";
+import * as breachUtil from "./util.breach.js";
+import * as targetUtil from "./util.target.js";
 
 export async function main(ns) {
+	ns.tprint("This script is outdated -- terminating");
+	ns.exit();
+
 	let target = ns.args[0];
 	if (target == undefined || ns.serverExists(target) === false) {
 		ns.tprint("Target server does not exist: " + target);
-		ns.tprint("Targeting last hackable server instead");
-		target = targets.getLastHackableHost(ns).host;
+		target = targetUtil.getLastHackableHost(ns).host;
+		ns.tprint("Targeting last hackable server instead: " + target);
 	}
 
-	if (breach.breachHost(ns, target) === false) {
+	if (breachUtil.breachHost(ns, target) === false) {
 		ns.tprint("Target server is not breachable");
 		ns.exit();
 	}
 
 	ns.tprint("Attacking " + target);
 
-	let hosts = common.listHosts(ns, "home", []);
-	let hostPurchasedPrefix = common.getHostPurchasedPrefix(ns);
-	let hackScript = common.getHackScript(ns);
+	let hosts = commonUtil.listHosts(ns, "home", []);
+	let hostPurchasedPrefix = commonUtil.getHostPurchasedPrefix(ns);
+	let hackScript = commonUtil.getHackScript(ns);
 
-	for (let key in hosts) {
-		let host = hosts[key];
-
+	for (let host of hosts) {
 		if (host === "home") {
 			continue;
 		}
 
 		if (host.substr(0, hostPurchasedPrefix.length) === hostPurchasedPrefix 
-		|| breach.breachHost(ns, host)) {
+		|| breachUtil.breachHost(ns, host)) {
 			await ns.killall(host);
 
 			let hostRamMax = ns.getServerMaxRam(host);
 			let hostRamUsed = ns.getServerUsedRam(host);
 			let hostRamAvail = hostRamMax - hostRamUsed;
 
-			if (hostRamAvail < common.getHackScriptRamCost(ns)) {
+			if (hostRamAvail < commonUtil.getHackScriptRamCost(ns)) {
 				continue;
 			}
 
-			let threadsCount = Math.floor(hostRamAvail / common.getHackScriptRamCost(ns));
+			let threadsCount = Math.floor(hostRamAvail / commonUtil.getHackScriptRamCost(ns));
 		
 			await ns.scp(hackScript, host);
 

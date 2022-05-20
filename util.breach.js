@@ -12,9 +12,9 @@ export function breachHost(ns, host) {
 
 	ns.tprint("Breaching " + host);
 
-	for (var key in portApps) {
-		if (isOwned(ns, portApps[key])) {
-			switch (portApps[key].substr(0, portApps[key].indexOf(".")).toLowerCase()) {
+	for (var app of portApps) {
+		if (isOwned(ns, app)) {
+			switch (app.substr(0, app.indexOf(".")).toLowerCase()) {
 				case 'brutessh':
 					ns.brutessh(host);
 					break;
@@ -40,7 +40,7 @@ export function breachHost(ns, host) {
 			}
 			
 			/* I really wish this worked...
-			let breachFunc = portApps[key].substr(0, portApps[key].indexOf(".")).toLowerCase();
+			let breachFunc = app.substr(0, app.indexOf(".")).toLowerCase();
 			this["ns." + breachFunc](host);
 			*/
 		}
@@ -65,8 +65,8 @@ export function isOwned(ns, app) {
 
 export function countOwned(ns) {
 	let owned = 0;
-	for (let key in portApps) {
-		owned += isOwned(ns, portApps[key]);
+	for (let app of portApps) {
+		owned += isOwned(ns, app);
 	}
 	return owned;
 }

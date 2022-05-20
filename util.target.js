@@ -1,31 +1,34 @@
 /** @param {NS} ns */
-import * as common from "./util.common.js";
-import * as breach from "./util.breach.js";
+import * as commonUtil from "./util.common.js";
+import * as breachUtil from "./util.breach.js";
 
 export function list(ns, moneyThresh = 0, hackableOnly = 0) {
-	let hosts = common.listHostsOther(ns);
+	let hosts = commonUtil.listHostsOther(ns);
 	let hostsDetails = [];
 
-	for (let key1 in hosts) {
-		let host = hosts[key1];
-
+	for (let host of hosts) {
 		let hostDetails = {};
 		hostDetails["host"] = host;
 		hostDetails["moneyMax"] = ns.getServerMaxMoney(host);
-		hostDetails["moneyMaxFormatted"] = common.formatMoney(ns, hostDetails["moneyMax"]);
-		hostDetails["moneyAvail"] = ns.getServerMoneyAvailable(host);
-		hostDetails["securityLevel"] = ns.getServerSecurityLevel(host);
-		hostDetails["securityLevelBase"] = ns.getServerBaseSecurityLevel(host);
+		//hostDetails["moneyMaxFormatted"] = commonUtil.formatMoney(ns, hostDetails["moneyMax"]);
+		hostDetails["moneyAvail"] = Math.floor(ns.getServerMoneyAvailable(host));
+		//hostDetails["moneyAvailFormatted"] = commonUtil.formatMoney(ns, hostDetails["moneyAvail");
+		hostDetails["securityLevel"] = Math.floor(ns.getServerSecurityLevel(host));
 		hostDetails["securityLevelMin"] = ns.getServerMinSecurityLevel(host);
 		hostDetails["hasRootAccess"] = ns.hasRootAccess(host);
+		hostDetails["maxRam"] = ns.getServerMaxRam(host);
 		hostDetails["hackLevelReq"] = ns.getServerRequiredHackingLevel(host);
 		hostDetails["portsOpenReq"] = ns.getServerNumPortsRequired(host);
 
-		if (hostDetails["moneyMax"] === 0 || hostDetails["moneyMax"] < moneyThresh) {
+		if (/*hostDetails["moneyMax"] === 0 ||*/ hostDetails["moneyMax"] < moneyThresh) {
 			continue;
-		} else if (hackableOnly && breach.isHackable(ns, host) === false) {
+		}
+
+		if (hackableOnly && breachUtil.isHackable(ns, host) === false) {
 			continue;
-		} else if (hackableOnly && breach.isBreachable(ns, host) === false) {
+		}
+
+		if (hackableOnly && breachUtil.isBreachable(ns, host) === false) {
 			continue;
 		}
 
@@ -33,10 +36,10 @@ export function list(ns, moneyThresh = 0, hackableOnly = 0) {
 			hostsDetails.push(hostDetails);
 		} else {
 			let inserted = false;
-			for (let key2 in hostsDetails) {
-				let compareHostDetails = hostsDetails[key2];
+			for (let key in hostsDetails) {
+				let compareHostDetails = hostsDetails[key];
 				if (hostDetails['moneyMax'] < compareHostDetails['moneyMax']) {
-					hostsDetails.splice(key2, 0, hostDetails);
+					hostsDetails.splice(key, 0, hostDetails);
 					inserted = true;
 					break;
 				}
@@ -49,6 +52,10 @@ export function list(ns, moneyThresh = 0, hackableOnly = 0) {
 	}
 
 	return hostsDetails;
+}
+
+export function getTargetDetails(ns, host) {
+	return list(ns, 0).filter(h => h.host === host).pop();
 }
 
 export function getFirstHackableHost(ns, moneyThresh = 0) {

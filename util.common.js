@@ -1,13 +1,28 @@
 /** @param {NS} ns **/
 
+/*
 export function getInitScript(ns) {
 	return "init.js";
+}
+*/
+
+export function getScriptsPurchaseScript(ns) {
+	return "purchaseScripts.js";
 }
 
 export function getServerPurchaseScript(ns) {
 	return "purchaseServers.js";
 }
 
+export function getWatcherScript(ns) {
+	return "watcher.js";
+}
+
+export function getAttackScript(ns) {
+	return "attack.js";
+}
+
+/*
 export function getLocalAttackScript(ns) {
 	return "attackHome.js";
 }
@@ -15,6 +30,7 @@ export function getLocalAttackScript(ns) {
 export function getRemoteAttackScript(ns) {
 	return "attackRemote.js";
 }
+*/
 
 export function getHackScript(ns) {
 	return "chesterTheMolester.js";
@@ -32,11 +48,9 @@ export function getLastHostPurchasedId(ns) {
 	let hosts = listHostsOwned(ns, false);
 
 	if (hosts.length === 0) {
-		ns.tprint("Returning -1");
 		return -1;
 	}
 
-	ns.tprint("Returning parsed value");
 	return hosts[hosts.length - 1].substring(hosts[hosts.length - 1].lastIndexOf("-") + 1);
 }
 
@@ -71,28 +85,21 @@ export function listHostsOther(ns) {
 }
 
 export function findProcessByName(ns, name, host, kill = false) {
-	let processes = ns.ps(host);
-	for (let key in processes) {
-		let process = processes[key];
+	let allProcesses = ns.ps(host);
+	let processes = [];
+	for (let process of allProcesses) {
 		if (process.filename === name) {
 			if (kill) {
 				ns.kill(process.pid, host);
 			} else {
-				return process;
+				processes.push(process);
 			}
 		}
 	}
-	/*
-	ns.ps(host).forEach(function (process) {
-		if (process.filename === name) {
-			if (kill) {
-				ns.kill(process.pid, host);
-			} else {
-				return process;
-			}
-		}
-	});
-	*/
+
+	if (processes.length > 0) {
+		return processes;
+	}
 
 	return null;
 }

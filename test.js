@@ -1,32 +1,39 @@
 /** @param {NS} ns **/
-import * as common from "./util.common.js";
-import * as breach from "./util.breach.js";
-import * as targets from "./util.targets.js";
+import * as commonUtil from "./util.common.js";
+import * as breachUtil from "./util.breach.js";
+import * as targetUtil from "./util.target.js";
+import * as tableUtil from "./util.table.js";
 
 export async function main(ns) {
-	//ns.tprint("First hackable host: " + targets.getFirstHackableHost(ns).host);
-	//ns.tprint("Last hackable host: " + targets.getLastHackableHost(ns).host);
-	//ns.tprint("Owned breach apps: " + breach.countOwned(ns));
+	//ns.tprint("First hackable host: " + targetUtil.getFirstHackableHost(ns).host);
+	//ns.tprint("Last hackable host: " + targetUtil.getLastHackableHost(ns).host);
+	//ns.tprint("Owned breach apps: " + breachUtil.countOwned(ns));
 	//ns.tprint("My hacking level: " + ns.getHackingLevel());
 	//ns.tprint("computek hacking level req: " + ns.getServerRequiredHackingLevel("computek"));
 	/*
 	ns.tprint("--------------------------------------------------------------------------------");
-	ns.tprint(common.listHostsOwned(ns));
+	ns.tprint(commonUtil.listHostsOwned(ns));
 	ns.tprint("--------------------------------------------------------------------------------");
-	ns.tprint(common.listHostsOther(ns));
+	ns.tprint(commonUtil.listHostsOther(ns));
 	ns.tprint("--------------------------------------------------------------------------------");
-	ns.tprint(common.getNextHostPurchasedName(ns));
+	ns.tprint(commonUtil.getNextHostPurchasedName(ns));
 	*/
 
-	/*
-	let maxRam = ns.getPurchasedServerMaxRam();
-	ns.tprint("Max RAM for server: " + maxRam);
+    //tableUtil.renderTable(ns, targetUtil.getTargetDetails(ns, 'n00dles'));
+    //let processes = commonUtil.findProcessByName(ns, commonUtil.getHackScript(ns));
+    //tableUtil.renderTable(ns, processes);
 
-	for (let i = 1; Math.pow(2, i) <= maxRam; i++) {
-		let ram = Math.pow(2, i);
-		ns.tprint(ram + "GB = " + common.formatMoney(ns, ns.getPurchasedServerCost(ram)));
-	}
-	*/
+    //let host = "syscore";
+    //ns.tprint((processes !== null && processes.filter(p => p.args[0] === host).length > 0) ? "found" : "not found");
 
-	await ns.sleep(30000);
+    //ns.tprint(commonUtil.listHosts(ns, "home", []));
+
+    let hosts = ["home","n00dles","joesguns"];
+    for (let host of hosts) {
+        let matched = (commonUtil.listHostsOther(ns).indexOf(host) >= 0);
+        ns.tprint("Host: '" + host + "' " + ((matched) ? "matched" : "not matched"));
+    }
+
+
+	//await ns.sleep(30000);
 }

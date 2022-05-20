@@ -1,6 +1,7 @@
 /** @param {NS} ns */
-import * as common from "./util.common.js";
-import * as targets from "./util.targets.js";
+import * as commonUtil from "./util.common.js";
+import * as targetUtil from "./util.target.js";
+import * as tableUtil from "./util.table.js";
 
 export async function main(ns) {
 	let moneyThresh = ns.args[0];
@@ -17,7 +18,9 @@ export async function main(ns) {
 
 	ns.tprint("Listing " 
 	+ ((hackableOnly) ? "hackable" : "all") + " hosts with at least " 
-	+ common.formatMoney(ns, moneyThresh) + " max money");
+	+ commonUtil.formatMoney(ns, moneyThresh) + " max money");
 
-	ns.tprint(targets.list(ns, moneyThresh, hackableOnly));
+	//ns.tprint(targets.list(ns, moneyThresh, hackableOnly));
+
+	tableUtil.renderTable(ns, "TARGETS", targetUtil.list(ns, moneyThresh, hackableOnly), true);
 }
