@@ -120,6 +120,17 @@ export function formatMoney(ns, money) {
 	return "$" + parseInt(money).toString().replace(/(.)(?=(\d{3})+$)/g,'$1,');
 }
 
+export function getHomeRamReserved(ns) {
+	let homeRamMax = ns.getServerMaxRam("home");
+	let homeRamReserved = 0;
+	if (homeRamMax >= 8192) {
+		homeRamReserved = 128;
+	} else if (homeRamMax >= 32) {
+		homeRamReserved = 8;
+	}
+	return homeRamReserved;
+}
+
 export function showNotice(ns, message, title = "notice") {
 	let lineChar = "=";
 	let titleLine = "==[" + title.toUpperCase() + "]==";
@@ -133,4 +144,17 @@ export function showNotice(ns, message, title = "notice") {
 		messageLine + "\n" +
 		lineChar.repeat(lineLength) + "\n\n";
 	ns.tprint(output);
+}
+
+export function beep(ns) {
+	var context = new AudioContext();
+	var oscillator = context.createOscillator();
+	oscillator.type = "sine";
+	oscillator.frequency.value = 800;
+	oscillator.connect(context.destination);
+	oscillator.start();
+// Beep for 500 milliseconds
+	setTimeout(function () {
+		oscillator.stop();
+	}, 100);
 }

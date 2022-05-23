@@ -26,6 +26,11 @@ async function newTarget(ns) {
 		let nextTarget = targetUtil.getLastHackableHost(ns)["host"];
 		if (nextTarget !== prevTarget) {
 			commonUtil.showNotice(ns, "New target exists: " + nextTarget);
+			if (ns.getServerMaxRam("home") - ns.getServerUsedRam("home") >= 32) {
+				// comment out the line below if it yields an error
+				// it loads singularity.connect which costs 32GB
+				commonUtil.beep(ns);
+			}
 			prevTarget = nextTarget;
 		}
 		await ns.sleep(5000);
@@ -38,6 +43,6 @@ async function listTargets(ns) {
 		: ns.args[1];
 	while (true) {
 		ns.run("findTargetHosts.js", 1, minMaxMoney, 1);
-		await ns.sleep(3000);
+		await ns.sleep(5000);
 	}
 }
