@@ -1,10 +1,8 @@
 /** @param {NS} ns **/
 
-/*
 export function getInitScript(ns) {
 	return "init.js";
 }
-*/
 
 export function getScriptsPurchaseScript(ns) {
 	return "purchaseScripts.js";
@@ -68,6 +66,20 @@ export function listHosts(ns, host, hostList) {
 		ns.scan(host).forEach(host => listHosts(ns, host, hostList));
 	}
 	return hostList;
+}
+
+export function listHostsConnections(ns, targetHost = null) {
+	let hostsConns = [];
+	for (let host of listHosts(ns, "home", [])) {
+		if (host.indexOf(getHostPurchasedPrefix(ns)) >= 0) {
+			continue;
+		}
+
+		if (targetHost === null || targetHost === host) {
+			hostsConns.push({"host":host, "connections":ns.scan(host).filter(h => h.indexOf(getHostPurchasedPrefix(ns)) < 0)});
+		}
+	}
+	return hostsConns;
 }
 
 export function listHostsOwned(ns, includeHome = true) {

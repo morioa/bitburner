@@ -5,7 +5,11 @@ import * as tableUtil from "./util.table.js";
 
 export async function main(ns) {
 	/* TODO */
-	let routes = [];
+	let host = ns.args[0];
+	if (host == undefined) {
+		host = null;
+	}
+	let routes = commonUtil.listHostsConnections(ns, host);
 
 	tableUtil.renderTable(ns, "ROUTES", routes, true);
 	//ns.tprint(routes);

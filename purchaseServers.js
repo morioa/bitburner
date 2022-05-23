@@ -6,6 +6,9 @@ import * as tableUtil from "./util.table.js";
 const defaultRam = 2048;
 
 export async function main(ns) {
+	ns.disableLog("ALL");
+	ns.enableLog("purchaseServer");
+
 	let hackScript = commonUtil.getHackScript(ns);
 	let target = targetUtil.getLastHackableHost(ns).host;
 	let ram = defaultRam;
@@ -15,13 +18,15 @@ export async function main(ns) {
 		switch (ns.args[0]) {
 			case "help":
 				showHelp(ns);
-				ns.exit();
 				break;
 			case "prices":
 				showServerPurchaseTable(ns);
-				ns.exit();
 				break;
 			default:
+				if (isNaN(ns.args[0]) || !isFinite(ns.args[0])) {
+					ns.tprint("Invalid argument");
+					showHelp(ns);
+				}
 				ram = ns.args[0];
 		}
 	}
@@ -81,6 +86,7 @@ function showServerPurchaseTable(ns) {
 	}
 
 	tableUtil.renderTable(ns, "SERVER COSTS", costs, true);
+	ns.exit();
 }
 
 function showHelp(ns) {
@@ -109,4 +115,5 @@ function showHelp(ns) {
 		"         run " + commonUtil.getServerPurchaseScript(ns) + " 4096 1\n\n";
 
 	ns.tprint(output);
+	ns.exit();
 }

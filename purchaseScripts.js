@@ -58,5 +58,8 @@ function showReminder(ns, reason) {
 	output += "This script is a work-in-progress.\n\n";
 
 	ns.tprint(output);
+
+	//ns.tprint(ns.getDarkwebPrograms());
+
 	ns.exit();
 }

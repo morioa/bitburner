@@ -4,10 +4,10 @@ import * as targetUtil from "./util.target.js";
 
 export async function main(ns) {
 	// start the watcher
-	ns.run(commonUtil.getWatcherScript(ns));
+	ns.run(commonUtil.getWatcherScript(ns), 1, "new");
 
 	// launch first attack wave
-	ns.run(commonUtil.getAttackScript(ns), 4, 2, 0);
+	ns.run(commonUtil.getAttackScript(ns), 1, 4, 2, 0);
 
 	// purchase scripts
 	ns.run(commonUtil.getScriptsPurchaseScript(ns));
