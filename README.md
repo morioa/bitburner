@@ -1,6 +1,6 @@
 # What is this?
 
-The files here are the current scripts that I've created and are using for my play-through of the game, [Bitburner](https://store.steampowered.com/app/1812820/Bitburner/), which is free-to-play on Steam. If you decide to play, I would recommend that you start with following the in-game tutorial and reading the supporting external documentation and guides linked within it before trying to understand and make use of these scripts. But, once you get a good grasp of what is going on and you either get stuck or just want to check out what these scripts do, then feel free to grab a copy and upload them into your own game instance. Enjoy!
+These files are the current scripts that I've created and are using for my play-through of the game, [Bitburner](https://github.com/danielyxie/bitburner#readme), which is free-to-play. If you decide to give it a try, I would recommend that you start with following the in-game tutorial and reading the supporting external documentation and guides linked within it before trying to understand and make use of these scripts. But, once you get a good grasp of what is going on and you either get stuck or just want to check out what these scripts do, then feel free to grab a copy and upload them into your own game instance. Enjoy!
 
 __*Beware that reading the details below may give away some spoilers.*__
 
@@ -40,13 +40,13 @@ run watcher.js rep faction "CyberSec" 50000
 
 [chesterTheMolester.js](https://github.com/morioa/bitburner/blob/master/chesterTheMolester.js)
 
-This guy is the one that gets the most action, getting distributed all over the place and performs weaken, grow, and hack actions against a specified target. While it can be, it would be atypical to run this one manually, and instead just let the attack script handle that.
+This guy is the one that gets the most action, getting distributed all over the place and performing weaken, grow, and hack actions against a specified target. While it can be, it would be atypical to run this one manually, and instead just let the attack script handle that.
 
 [attack.js](https://github.com/morioa/bitburner/blob/master/attack.js)
 
-To actually make money in this game and to help raise the hacking skill, you must hack targets. To do that, you must have root access on the target server. To gain that, you must have a high enough hacking skill and enough programs to open the required ports on the server. This script makes that easy by doing all the heavy lifting. This script will automatically breach and gain root access on all hackable hosts and targets before copying *Chester* to the remote host and setting him loose to mount the attack.
+To actually make money in this game, one of your options is to hack targets. To do that, you must have root access on the target server. To gain that, you must have a high enough hacking skill and enough programs to open the required ports on the server. This script makes that easy by doing all the heavy lifting by automatically breaching and gaining root access on all hackable hosts and targets before copying *Chester* to the remote host and setting him loose to mount the attack.
 
-*__NOTE__: I was intending on doing multiple attack models, but right now the only one implemented is the "distributed" model, which uses equal resources to attack all possible targets based on the specified attack criteria.*
+*__NOTE__: I was intending on doing multiple attack models, but right now the only one implemented is the "distributed" model, which uses all available resources equally to attack all possible targets based on the specified attack criteria.*
 
 Show the help to get more detail and examples
 
