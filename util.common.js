@@ -20,16 +20,6 @@ export function getAttackScript(ns) {
 	return "attack.js";
 }
 
-/*
-export function getLocalAttackScript(ns) {
-	return "attackHome.js";
-}
-
-export function getRemoteAttackScript(ns) {
-	return "attackRemote.js";
-}
-*/
-
 export function getHackScript(ns) {
 	return "chesterTheMolester.js";
 }
