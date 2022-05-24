@@ -71,7 +71,7 @@ export async function main(ns) {
     ns.tprint("Total profit: " + totalProfit);
     */
 
-    commonUtil.beep(ns);
+    ns.tprint(ns.getOwnedSourceFiles());
 }
 
 function findNextSmallestKey(ns, data, startFrom) {
