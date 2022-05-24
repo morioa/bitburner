@@ -27,7 +27,7 @@ Watching for the newest hackable target
 run watcher.js new
 ```
 
-Watching a list of hackable targets with $10b server max money
+Watching a list of hackable targets with at least $10b server max money
 ```
 run watcher.js list 10000000000 1
 ```
@@ -52,7 +52,7 @@ Show the help to get more detail and examples
 run attack.js help
 ```
 
-Attacking all hackable targets with $10b server max money using all hosts with root access
+Attacking all hackable targets with at least $10b server max money using all hosts with root access
 
 ```
 run attack.js 4 2 10000000000
