@@ -44,7 +44,9 @@ This guy is the one that gets the most action, getting distributed all over the 
 
 [attack.js](https://github.com/morioa/bitburner/blob/master/attack.js)
 
-To actually make money in this game and to help raise the hacking skill, you must hack targets. This script makes that easy by doing all the heavy lifting. I was intending on doing multiple attack models, but right now the only one implemented is the "distributed" model, which uses equal resources to attack all possible targets based on the specified attack criteria.
+To actually make money in this game and to help raise the hacking skill, you must hack targets. To do that, you must have root access on the target server. To gain that, you must have a high enough hacking skill and enough programs to open the required ports on the server. This script makes that easy by doing all the heavy lifting. This script will automatically breach and gain root access on all hackable hosts and targets before mounting the attack.
+
+*__NOTE__: I was intending on doing multiple attack models, but right now the only one implemented is the "distributed" model, which uses equal resources to attack all possible targets based on the specified attack criteria.*
 
 Show the help to get more detail and examples
 
