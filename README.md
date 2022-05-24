@@ -1,6 +1,6 @@
 # What is this?
 
-The files here are the current script files that I've created and are using for my play-through of the game, [Bitburner](https://store.steampowered.com/app/1812820/Bitburner/), which is free-to-play on Steam. If you decide to play, I would recommend that you start with following the in-game tutorial and reading the supporting external documentation and guides linked within it before trying to understand and make use of these scripts. But, once you get a good grasp of what is going on and you either get stuck or just want to check out what these scripts do, then feel free to grab a copy and upload them into your own game instance. Enjoy!
+The files here are the current scripts that I've created and are using for my play-through of the game, [Bitburner](https://store.steampowered.com/app/1812820/Bitburner/), which is free-to-play on Steam. If you decide to play, I would recommend that you start with following the in-game tutorial and reading the supporting external documentation and guides linked within it before trying to understand and make use of these scripts. But, once you get a good grasp of what is going on and you either get stuck or just want to check out what these scripts do, then feel free to grab a copy and upload them into your own game instance. Enjoy!
 
 __*Beware that reading the details below may give away some spoilers.*__
 
