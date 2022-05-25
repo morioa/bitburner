@@ -2,19 +2,13 @@
 import * as commonUtil from "./util.common.js";
 import * as targetUtil from "./util.target.js";
 import * as tableUtil from "./util.table.js";
+import * as isUtil from "./util.is.js";
 
 export async function main(ns) {
-	let moneyThresh = ns.args[0];
-	if (moneyThresh == undefined) {
-		moneyThresh = 0;
-	}
-
-	let hackableOnly = ns.args[1];
-	hackableOnly = (hackableOnly == undefined 
-	|| (hackableOnly.toString().toLowerCase() !== "true" 
-	&& Number(hackableOnly) !== 1)) 
-		? 0
-		: 1;
+	let moneyThresh = (isUtil.numberValid(ns, ns.args[0]))
+		? ns.args[0]
+	    : 0;
+	let hackableOnly = (isUtil.numberEqual(ns, ns.args[1], 1));
 
 	ns.tprint("Listing " 
 	+ ((hackableOnly) ? "hackable" : "all") + " hosts with at least " 

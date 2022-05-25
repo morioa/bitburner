@@ -121,6 +121,10 @@ export function getHomeRamReserved(ns) {
 	return homeRamReserved;
 }
 
+export function upperFirstLetter(ns, str) {
+	return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 export function showNotice(ns, message, title = "notice") {
 	let lineChar = "=";
 	let titleLine = "==[" + title.toUpperCase() + "]==";

@@ -8,17 +8,23 @@ __*Beware that reading the details below may give away some spoilers.*__
 
 [init.js](https://github.com/morioa/bitburner/blob/master/init.js)
 
-When starting a new game or reset due to augmentation installation, this script automates starting the watcher for new attack targets, launches the first attack wave against all hackable targets, and attempts to purchase scripts that are available from the Darkweb. 
+When starting a new game or reset due to augmentation installation, this script automates starting the watcher for new attack targets, launches the first attack wave against all hackable targets, and attempts to purchase scripts that are available from the Darkweb. If you pass a max money value as the first argument for the script, then it will pass it along to the watcher script, which will then pass it along to the attack script to attack only targets that meet that minimum money requirement. The init script now also instructs the watcher script to automatically remount attacks when new hackable targets are found.
 
 *__NOTE:__ A specific requirement must be met in order for the automated scripts purchase to be usable.*
 
+Initialize with defaults
 ```
 run init.js
 ```
 
+Initialize with instruction to watch and attack hackable targets with at least $10m server max money
+```
+run init.js 10000000
+```
+
 [watcher.js](https://github.com/morioa/bitburner/blob/master/watcher.js)
 
-The watcher script allows for monitoring various things indefinitely or until a specified criteria has been met.  I've added an audible beep for alert purposes, but that comes with quite a memory cost to support it that is not feasible to use early on with a "home" server that has very little RAM, so it will only start doing audible alerts once there is enough system memory to handle it. Until then, only visible notices will be displayed in the terminal.
+The watcher script allows for monitoring various things indefinitely or until a specified criteria has been met.  I've added an audible beep for alert purposes, but that comes with quite a memory cost to support it that is not feasible to use early on with a "home" server that has very little RAM, so it will only start doing audible alerts once there is enough system memory to handle it. Until then, only visible notices will be displayed in the terminal. The watcher can now optionally remount the attack when a new target is found.
 
 *__NOTE:__ A specific requirement must be met in order for reputation to be monitored.* 
 
@@ -38,10 +44,6 @@ Watching and getting an alert when your reputation reaches 50k with the CyberSec
 run watcher.js rep faction "CyberSec" 50000
 ```
 
-[chesterTheMolester.js](https://github.com/morioa/bitburner/blob/master/chesterTheMolester.js)
-
-This guy is the one that gets the most action, getting distributed all over the place and performing weaken, grow, and hack actions against a specified target. While it can be, it would be atypical to run this one manually, and instead just let the attack script handle that.
-
 [attack.js](https://github.com/morioa/bitburner/blob/master/attack.js)
 
 To actually make money in this game, one of your options is to hack targets. To do that, you must have root access on the target server. To gain that, you must have a high enough hacking skill and enough programs to open the required ports on the server. This script makes that easy by doing all the heavy lifting by automatically breaching and gaining root access on all hackable hosts and targets before copying *Chester* to the remote host and setting him loose to mount the attack.
@@ -60,3 +62,12 @@ Attacking all hackable targets with at least $10b server max money using all hos
 run attack.js 4 2 10000000000
 ```
 
+[chesterTheMolester.js](https://github.com/morioa/bitburner/blob/master/chesterTheMolester.js)
+
+This guy is the one that gets the most action, getting distributed all over the place and performing weaken, grow, and hack actions against a specified target. While it can be, it would be atypical to run this one manually, and instead just let the attack script handle that. This script is only used when the "consolidated" algorithm is chosen for the attack. This was based on the original script from the tutorial and is not the most efficient method of attack, thus it is no longer the default script used by the attack script.
+
+[_grow.js](https://github.com/morioa/bitburner/blob/master/_grow.js)
+[_hack.js](https://github.com/morioa/bitburner/blob/master/_hack.js)
+[_weaken.js](https://github.com/morioa/bitburner/blob/master/_weaken.js)
+
+These are forever loop scripts that are very small in RAM usage and will continuously attempt one action each. They are simple, but require a lot more to manage them than Chester. These are used by the attack script using the "loop" algorithm, and is currently the default method of attack. They are not executed equally, but each script is weighted as to how many threads they will consume on each host server. 

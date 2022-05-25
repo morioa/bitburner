@@ -3,6 +3,7 @@ import * as commonUtil from "./util.common.js";
 import * as breachUtil from "./util.breach.js";
 import * as targetUtil from "./util.target.js";
 import * as tableUtil from "./util.table.js";
+import * as isUtil from "./util.is.js";
 
 const fromOpts = {0:"home", 1:"owned", 2:"purchased", 3:"other", 4:"all"};
 const fromDefault = 4;
@@ -12,8 +13,22 @@ const modelDefault = 2;
 
 const targetMoneyThreshDefault = 0;
 
+const algos = {
+	consolidated: [
+		{file: "chesterTheMolester.js", weight: 1.0}
+	],
+	loop: [
+		{file: "_grow.js", weight: 0.77},
+		{file: "_hack.js", weight: 0.08},
+		{file: "_weaken.js", weight: 0.15}
+	]
+};
+const algoType = "loop";
+const algo = algos[algoType];
+
 export async function main(ns) {
 	ns.disableLog("ALL");
+	ns.enableLog("exec");
 
 	let attackParams = getAttackParams(ns);
 	ns.tprint(attackParams);
@@ -95,100 +110,132 @@ function getUsableHosts(ns, otherOnly = false) {
 }
 
 async function attackDistributedAll(ns, moneyThresh) {
-	let hosts = getUsableHosts(ns);
-	let hostsOther = getUsableHosts(ns, true);
-	let allTargets = targetUtil.list(ns, moneyThresh, 1);
-	let hackScript = commonUtil.getHackScript(ns);
-	let hostsCount = hosts.length;
+	const hosts = getUsableHosts(ns);
+	const hostsOther = getUsableHosts(ns, true);
+	const allTargets = targetUtil.list(ns, moneyThresh, 1);
 	let hostsUsedCount = 0;
 	let targetsAttacked = [];
 
 	tableUtil.renderTable(ns, "TARGETS", allTargets, true);
 
-	for (let host of hosts) {
+	// Loop through usable hosts
+	for (const host of hosts) {
+		// Ensure that usable hosts that are not owned are actually usable
 		if (hostsOther.indexOf(host) >= 0) {
-			// Ensure that the usable host is actually usable by breaching it...
 			if (breachUtil.breachHost(ns, host) === false) {
-				// We should never get here, but just in case...
-				ns.print("Usable server '" + host + "' is not breachable -- SKIPPING");
+				// We should never get here, but just in case move onto the next host
+				//ns.print("Usable server '" + host + "' is not breachable -- SKIPPING");
 				continue;
 			}
 		}
 
-		commonUtil.findProcessByName(ns, hackScript, host, true);
+		// Kill all existing processes that match any of the attack scripts
+		for (const [k,script] of Object.entries(algos)) {
+			for (const file of script.map(x => x.file)) {
+				commonUtil.findProcessByName(ns, file, host, true);
+			}
+		}
 
-		let hostRamReserved = (host === "home")
+		// Determine how much RAM is available for use on this host
+		const hostRamReserved = (host === "home")
 			? commonUtil.getHomeRamReserved(ns)
 			: 0;
-		let hostRamMax = ns.getServerMaxRam(host);
+		const hostRamMax = ns.getServerMaxRam(host);
 		let hostRamUsed = ns.getServerUsedRam(host);
 		let hostRamAvail = hostRamMax - hostRamReserved - hostRamUsed;
+		const hostRamMinReq = algo.reduce((acc, curr) => acc + ns.getScriptRam(curr.file), 0)
 
-		if (hostRamAvail <= 0) {
-			ns.print("Host '" + host + "' does not have any RAM -- SKIPPING");
+		// Skip this host if the available RAM does not meet the minimum requirement
+		if (hostRamAvail < hostRamMinReq) {
+			//ns.print("Host '" + host + "' does not have enough RAM -- SKIPPING");
 			continue;
 		}
 
-		let threadsTotal = hostRamAvail / commonUtil.getHackScriptRamCost(ns);
+		// Determine how many max threads this host can handle per target
+		const singleScriptRamCost = algo.reduce((acc, curr) => (acc > ns.getScriptRam(curr.file)) ? acc : ns.getScriptRam(curr.file), 0);
+		const threadsTotal = hostRamAvail / singleScriptRamCost;
 		let threadsPerTarget = Math.floor((threadsTotal) / allTargets.length);
 		let thisHostTargets = allTargets;
+		let threadsPerTargetMinReq = algo.length;
 
-		if (threadsPerTarget === 0) {
+		// Assign all threads to the last / hardest target if not enough RAM to attack all targets
+		if (threadsPerTarget < threadsPerTargetMinReq) {
 			//ns.print("Host '" + host + "' does not have enough RAM to target all servers");
 			//ns.print("Assigning host resources to last target");
 			thisHostTargets = [allTargets[allTargets.length - 1]];
-			threadsPerTarget = threadsTotal;
+			threadsPerTarget = Math.floor(threadsTotal);
 		}
 
-		let estRamUsed = (threadsPerTarget * allTargets.length) * commonUtil.getHackScriptRamCost(ns);
-		let hostRamRemain = hostRamAvail - hostRamReserved - estRamUsed;
-		let threadsRemain = Math.floor(hostRamRemain / commonUtil.getHackScriptRamCost(ns));
-		/*
-		if (host === "home") {
-			let homeOutput = "\n\n" +
-				"Threads total:         " + threadsTotal + "\n" +
-				"Threads per target:    " + threadsPerTarget + "\n" +
-				"Hack script RAM cost:  " + commonUtil.getHackScriptRamCost(ns) + "\n" +
-				"Host RAM reserved:     " + hostRamReserved + "\n" +
-				"Host RAM avail:        " + hostRamAvail + "\n" +
-				"Est RAM used:          " + estRamUsed + "\n" +
-				"Host RAM remain:       " + hostRamRemain + "\n" +
-				"Threads remain:        " + threadsRemain + "\n\n";
-			ns.tprint(homeOutput);
-		}
-		*/
-
+		// Copy attack scripts to the remote host
 		if (host !== "home") {
-			await ns.scp(hackScript, host);
+			for (const file of algo.map(x => x.file)) {
+				await ns.scp(file, host);
+			}
 		}
 
-		let i;
-		for (let i in thisHostTargets) {
-			let target = thisHostTargets[i];
-			if (target["moneyMax"] === 0) {
-				ns.print("Target '" + target["host"] + "' has 0 max money -- SKIPPING");
-			}
-
-			target = target["host"];
-			if (breachUtil.breachHost(ns, target) === false) {
-				// We should never get here, but just in case...
-				ns.print("Target server '" + target + "' is not breachable -- SKIPPING");
+		for (const [i, target] of Object.entries(thisHostTargets)) {
+			// Ignore target if there is no money to be gained
+			if (target.moneyMax === 0) {
+				//ns.print("Target '" + target.host + "' has 0 max money -- SKIPPING");
 				continue;
 			}
 
-			if (ns.fileExists(hackScript, host)) {
-				let targetThreads = threadsPerTarget;
-				if (parseInt(i) === thisHostTargets.length - 1 && threadsRemain > 0) {
-					//ns.print("Host remaining threads applied to this target");
-					targetThreads += threadsRemain;
-				}
+			// Breach the target
+			if (breachUtil.breachHost(ns, target.host) === false) {
+				// We should never get here because it's already been determined it's breachable, but just in case...
+				//ns.print("Target server '" + target.host + "' is not breachable -- SKIPPING");
+				continue;
+			}
 
-				ns.exec(hackScript, host, targetThreads, target);
-				if (!targetsAttacked.includes(target)) {
-					targetsAttacked.push(target);
+			let targetThreadsHolder = threadsPerTarget;
+			let targetThreads = threadsPerTarget;
+			let targetThreadsPctUsed = 0;
+
+			// If this is the last target and there are extra threads remaining, add them to the attack pool
+			ns.print(`${i} : ${Object.entries(thisHostTargets).length - 1}`);
+			if (isUtil.numberEqual(ns, i, Object.entries(thisHostTargets).length - 1)) {
+				// Determine if there is any threads left over to apply to the last target
+				hostRamUsed = ns.getServerUsedRam(host);
+				hostRamAvail = hostRamMax - hostRamReserved - hostRamUsed;
+				targetThreadsHolder = Math.floor(hostRamAvail / singleScriptRamCost);
+			}
+
+			// Sort files in order by weight, smallest to largest
+			algo.sort((a,b) => a.weight - b.weight);
+
+			// Loop through each file in the chosen attack algorithm
+			for (const [j, script] of Object.entries(algo)) {
+
+				if (ns.fileExists(script.file, host)) {
+					// The attack file exists on the host, so let's do this...
+					let fileThreads = targetThreads;
+
+					if (isUtil.numberLess(ns, j, Object.entries(algo).length - 1)) {
+						// Make sure that less weighted attack scripts still have at least one thread
+						fileThreads = Math.floor(targetThreadsHolder * script.weight);
+						if (fileThreads === 0) {
+							fileThreads = 1;
+						}
+					} else {
+						// Make sure that the threads for the most weighted script do not exceed 100% utilization
+						//ns.print(`Threads per target: ${targetThreadsHolder}`);
+						//ns.print(`Percent used: ${targetThreadsPctUsed}`);
+						//ns.print(`Target threads remaining: ${targetThreads}`);
+						//ns.print(`File threads (pre calc): ${fileThreads}`);
+						fileThreads = targetThreadsHolder - Math.ceil(targetThreadsHolder * targetThreadsPctUsed);
+						//ns.print(`File threads (post calc): ${fileThreads}`);
+					}
+
+					// ATTACK!
+					ns.exec(script.file, host, fileThreads, target.host);
+					if (!targetsAttacked.includes(target.host)) {
+						targetsAttacked.push(target.host);
+					}
+					//ns.print("Host '" + host + "' is attacking target '" + target.host + "' with " + fileThreads + " threads");
+					commonUtil.findProcessByName(ns, script.file, host);
+					targetThreads -= fileThreads;
+					targetThreadsPctUsed += fileThreads / targetThreadsHolder;
 				}
-				//ns.print("Host '" + host + "' is attacking target '" + target + "' with " + targetThreads + " threads");
-				commonUtil.findProcessByName(ns, hackScript, host);
 			}
 		}
 

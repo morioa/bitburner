@@ -3,6 +3,7 @@ import * as commonUtil from "./util.common.js";
 import * as breachUtil from "./util.breach.js";
 import * as targetUtil from "./util.target.js";
 import * as tableUtil from "./util.table.js";
+import * as isUtil from "./util.is.js";
 
 export async function main(ns) {
 	//ns.tprint("First hackable host: " + targetUtil.getFirstHackableHost(ns).host);
@@ -71,7 +72,51 @@ export async function main(ns) {
     ns.tprint("Total profit: " + totalProfit);
     */
 
-    ns.tprint(ns.getOwnedSourceFiles());
+    //ns.tprint(ns.getOwnedSourceFiles());
+
+    /*
+    let entityType = "faction";
+    let getRep = {
+        company: getCompanyRep,
+        faction: getFactionRep
+    };
+    getRep[entityType](ns);
+    */
+
+    let algos = {
+        consolidated: [
+            {file: "chesterTheMolester.js", weight: 1.0}
+        ],
+        loop: [
+            {file: "_grow.js", weight: 0.77},
+            {file: "_hack.js", weight: 0.08},
+            {file: "_weaken.js", weight: 0.15}
+        ]
+    };
+    let algoType = "loop";
+    let algo = algos[algoType];
+
+    //ns.tprint(ns.getScriptRam(algo[0].file));
+    /*
+    for (let file of algo.map(x => x.file)) {
+        ns.tprint(file);
+    }
+    algo.sort((a,b) => a.weight - b.weight);
+    */
+
+    for (const [i,script] of Object.entries(algo)) {
+        //ns.tprint(`${i}: ${script.file}`);
+        //ns.tprint(isUtil.numberEqual(ns, i, algo.length - 1));
+        ns.tprint(`${i} : ${Object.entries(algo).length - 1}`);
+    }
+
+    //ns.tprint(algo.reduce((acc, curr) => (acc > ns.getScriptRam(curr.file)) ? acc : ns.getScriptRam(curr.file), 0));
+
+    for (let [k, script] of Object.entries(algos)) {
+        for (let file of script.map(x => x.file)) {
+            ns.tprint("File: " + file);
+        }
+    }
 }
 
 function findNextSmallestKey(ns, data, startFrom) {
@@ -92,3 +137,10 @@ function findNextBiggestKey(ns, data, startFrom) {
     return startFrom;
 }
 
+function getCompanyRep(ns) {
+    ns.tprint("Called getCompanyRep");
+}
+
+function getFactionRep(ns) {
+    ns.tprint("Called getFactionRep");
+}
