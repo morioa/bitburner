@@ -62,7 +62,7 @@ Attacking all hackable targets with at least $10b server max money using all hos
 run attack.js 4 2 10000000000
 ```
 
-[_chesterTheMolester.js](https://github.com/morioa/bitburner/blob/master/chesterTheMolester.js)
+[_chesterTheMolester.js](https://github.com/morioa/bitburner/blob/master/_chesterTheMolester.js)
 
 This guy is the one that gets the most action, getting distributed all over the place and performing weaken, grow, and hack actions against a specified target. While it can be, it would be atypical to run this one manually, and instead just let the attack script handle that. This script is only used when the "consolidated" algorithm is chosen for the attack. This was based on the original script from the tutorial and is not the most efficient method of attack, thus it is no longer the default script used by the attack script.
 

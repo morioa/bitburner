@@ -6,19 +6,19 @@ import * as tableUtil from "./util.table.js";
 import * as isUtil from "./util.is.js";
 
 export async function main(ns) {
-	//ns.tprint("First hackable host: " + targetUtil.getFirstHackableHost(ns).host);
-	//ns.tprint("Last hackable host: " + targetUtil.getLastHackableHost(ns).host);
-	//ns.tprint("Owned breach apps: " + breachUtil.countOwned(ns));
-	//ns.tprint("My hacking level: " + ns.getHackingLevel());
-	//ns.tprint("computek hacking level req: " + ns.getServerRequiredHackingLevel("computek"));
-	/*
-	ns.tprint("--------------------------------------------------------------------------------");
-	ns.tprint(commonUtil.listHostsOwned(ns));
-	ns.tprint("--------------------------------------------------------------------------------");
-	ns.tprint(commonUtil.listHostsOther(ns));
-	ns.tprint("--------------------------------------------------------------------------------");
-	ns.tprint(commonUtil.getNextHostPurchasedName(ns));
-	*/
+    //ns.tprint("First hackable host: " + targetUtil.getFirstHackableHost(ns).host);
+    //ns.tprint("Last hackable host: " + targetUtil.getLastHackableHost(ns).host);
+    //ns.tprint("Owned breach apps: " + breachUtil.countOwned(ns));
+    //ns.tprint("My hacking level: " + ns.getHackingLevel());
+    //ns.tprint("computek hacking level req: " + ns.getServerRequiredHackingLevel("computek"));
+    /*
+    ns.tprint("--------------------------------------------------------------------------------");
+    ns.tprint(commonUtil.listHostsOwned(ns));
+    ns.tprint("--------------------------------------------------------------------------------");
+    ns.tprint(commonUtil.listHostsOther(ns));
+    ns.tprint("--------------------------------------------------------------------------------");
+    ns.tprint(commonUtil.getNextHostPurchasedName(ns));
+    */
 
     //tableUtil.renderTable(ns, targetUtil.getTargetDetails(ns, 'n00dles'));
     //let processes = commonUtil.findProcessByName(ns, commonUtil.getHackScript(ns));
@@ -31,7 +31,7 @@ export async function main(ns) {
 
     //commonUtil.showNotice(ns, "New target exists: fulcrumassets");
 
-	//await ns.sleep(30000);
+    //await ns.sleep(30000);
 
     /*
     let data = [81,105,127,119,101,173,148,155,33,81,156,162,76,83,54,19,83,186,78,39,168,191,139,74,141,120,96,20,145,143,98,143,117,2];
