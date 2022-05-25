@@ -21,7 +21,7 @@ export function getAttackScript(ns) {
 }
 
 export function getHackScript(ns) {
-	return "chesterTheMolester.js";
+	return "_chesterTheMolester.js";
 }
 
 export function getHackScriptRamCost(ns) {

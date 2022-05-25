@@ -1,8 +1,8 @@
 /** @param {NS} ns */
 import * as commonUtil from "./util.common.js";
 import * as targetUtil from "./util.target.js";
+import * as breachUtil from "./util.breach.js";
 import * as isUtil from "./util.is.js";
-import {numberGreaterOrEqual, numberValid} from "./util.is.js";
 
 export async function main(ns) {
 	let watchWhat = (ns.args[0] == undefined)
@@ -44,8 +44,15 @@ async function newTarget(ns) {
 			beep(ns);
 			await ns.sleep(1000);
 
+			await breachUtil.breachAll(ns, targetUtil.getUnbreachedHosts(ns));
+
 			if (autoAttack) {
 				await ns.run(commonUtil.getAttackScript(ns), 1, 4, 2, moneyThresh);
+			}
+
+			if (Object.entries(targetUtil.getUnbreachedHosts(ns)).length === 0) {
+				ns.tprint("All available hosts and targets breached and attacked -- TERMINATING SELF");
+				ns.exit();
 			}
 		}
 		await ns.sleep(5000);

@@ -15,7 +15,7 @@ const targetMoneyThreshDefault = 0;
 
 const algos = {
 	consolidated: [
-		{file: "chesterTheMolester.js", weight: 1.0}
+		{file: "_chesterTheMolester.js", weight: 1.0}
 	],
 	loop: [
 		{file: "_grow.js", weight: 0.77},

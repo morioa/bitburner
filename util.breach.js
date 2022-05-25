@@ -1,7 +1,14 @@
 /** @param {NS} ns **/
+
 const portApps = [ "BruteSSH.exe", "FTPCrack.exe", "relaySMTP.exe", "HTTPWorm.exe", "SQLInject.exe" ];
 
-export function breachHost(ns, host) {
+export async function breachAll(ns, hosts) {
+	for (const [i, host] of Object.entries(hosts.filter(h => !h.hasRootAccess))) {
+		await breachHost(ns, host.host);
+	}
+}
+
+export async function breachHost(ns, host) {
 	if (ns.hasRootAccess(host)) {
 		return true;
 	}

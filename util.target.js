@@ -20,7 +20,7 @@ export function list(ns, moneyThresh = 0, hackableOnly = 0) {
 		hostDetails["hackLevelReq"] = ns.getServerRequiredHackingLevel(host);
 		hostDetails["portsOpenReq"] = ns.getServerNumPortsRequired(host);
 
-		if (/*hostDetails["moneyMax"] === 0 ||*/ hostDetails["moneyMax"] < moneyThresh) {
+		if (hostDetails["moneyMax"] < moneyThresh) {
 			continue;
 		}
 
@@ -66,6 +66,6 @@ export function getLastHackableHost(ns, moneyThresh = 0) {
 	return list(ns, moneyThresh, 1).pop();
 }
 
-export function getNextHackableHost(ns, moneyThresh = 0) {
-	//return list(ns, moneyThresh, 1).pop();
+export function getUnbreachedHosts(ns) {
+	return list(ns).filter(h => !h.hasRootAccess);
 }

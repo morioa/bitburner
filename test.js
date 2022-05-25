@@ -83,9 +83,10 @@ export async function main(ns) {
     getRep[entityType](ns);
     */
 
+    /*
     let algos = {
         consolidated: [
-            {file: "chesterTheMolester.js", weight: 1.0}
+            {file: "_chesterTheMolester.js", weight: 1.0}
         ],
         loop: [
             {file: "_grow.js", weight: 0.77},
@@ -95,6 +96,7 @@ export async function main(ns) {
     };
     let algoType = "loop";
     let algo = algos[algoType];
+    */
 
     //ns.tprint(ns.getScriptRam(algo[0].file));
     /*
@@ -104,6 +106,7 @@ export async function main(ns) {
     algo.sort((a,b) => a.weight - b.weight);
     */
 
+    /*
     for (const [i,script] of Object.entries(algo)) {
         //ns.tprint(`${i}: ${script.file}`);
         //ns.tprint(isUtil.numberEqual(ns, i, algo.length - 1));
@@ -117,6 +120,44 @@ export async function main(ns) {
             ns.tprint("File: " + file);
         }
     }
+    */
+
+    /*
+    const tableChars = {
+        tlc: "╔",
+        trc: "╗",
+        blc: "",
+        brc: "",
+        ti:  "",
+        li:  "╠",
+        mi:  "",
+        ri:  "",
+        bi:  "",
+        hl:  "═",
+        vl:  "║",
+        s:   " "
+    };
+
+    const output = "\n\n" +
+        tlCornerChar + horizLineChar.repeat(4) + trCornerChar + "\n" +
+        vertLineChar + spaceChar.repeat(4) + vertLineChar + "\n" +
+        vertLineChar + spaceChar.repeat(4) + vertLineChar + "\n" +
+        blCornerChar + horizLineChar.repeat(4) + brCornerChar + "\n\n";
+    ns.tprint(output);
+    */
+
+    /*
+    let hosts = targetUtil.list(ns);
+    for (const [i, host] of Object.entries(hosts.filter(h => !h.hasRootAccess))) {
+        ns.tprint(i,":",host.host);
+    }
+
+    for (const [i, host] of Object.entries(hosts)) {
+        ns.tprint(i,":",host.host);
+    }
+    */
+
+    ns.tprint(targetUtil.getUnbreachedHosts(ns));
 }
 
 function findNextSmallestKey(ns, data, startFrom) {

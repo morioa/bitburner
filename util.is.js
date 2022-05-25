@@ -1,5 +1,13 @@
 /** @param {NS} ns **/
 
+export function valueEqual(ns, val1, val2) {
+    return (
+        val1 != undefined &&
+        val2 != undefined &&
+        val1 === val2
+    );
+}
+
 export function numberEqual(ns, num1, num2, finiteConstraint = true) {
     return (
         numberValid(ns, num1, finiteConstraint) &&
