@@ -4,13 +4,12 @@ import * as targetUtil from "./util.target.js";
 import * as tableUtil from "./util.table.js";
 
 export async function main(ns) {
-	/* TODO */
-	let host = ns.args[0];
+    let host = ns.args[0];
     if (host == undefined) {
-		host = null;
-	}
-	let routes = commonUtil.listHostsConnections(ns, host);
+        host = null;
+    }
+    let routes = commonUtil.listHostsConnections(ns, host);
 
-	tableUtil.renderTable(ns, "ROUTES", routes, true);
-	//ns.tprint(routes);
+    tableUtil.renderTable(ns, "ROUTES", routes, true);
+    //ns.tprint(routes);
 }
