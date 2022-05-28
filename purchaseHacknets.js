@@ -23,9 +23,9 @@ export async function main(ns) {
 
     let numNodes = ns.hacknet.numNodes();
 
-    ns.tprint("Hacknet nodes count: " + numNodes);
+    ns.tprintf("Hacknet nodes count: " + numNodes);
 
-    ns.tprint("Upgrading nodes [LEVEL => " + (nodeUpgradeLevelLimit + 1) + "]");
+    ns.tprintf("Upgrading nodes [LEVEL => " + (nodeUpgradeLevelLimit + 1) + "]");
     for (let i = 0; i < numNodes; i++) {
         let cost = ns.hacknet.getLevelUpgradeCost(i, nodeUpgradeLevelLimit);
         if (!isFinite(cost)) {
@@ -37,9 +37,9 @@ export async function main(ns) {
         }
         ns.hacknet.upgradeLevel(i, nodeUpgradeLevelLimit);
     }
-    ns.tprint("All nodes fully upgraded to max level");
+    ns.tprintf("INFO: All nodes fully upgraded to max level");
 
-    ns.tprint("Upgrading nodes [RAM => " + Math.pow(2, nodeUpgradeRamLimit) + "]");
+    ns.tprintf("Upgrading nodes [RAM => " + Math.pow(2, nodeUpgradeRamLimit) + "]");
     for (let i = 0; i < numNodes; i++) {
         let cost = ns.hacknet.getRamUpgradeCost(i, nodeUpgradeRamLimit);
         if (!isFinite(cost)) {
@@ -51,9 +51,9 @@ export async function main(ns) {
         }
         ns.hacknet.upgradeRam(i, nodeUpgradeRamLimit);
     }
-    ns.tprint("All nodes fully upgraded to max RAM");
+    ns.tprintf("INFO: All nodes fully upgraded to max RAM");
 
-    ns.tprint("Upgrading nodes [CORES => " + (nodeUpgradeCoreLimit + 1) + "]");
+    ns.tprintf("Upgrading nodes [CORES => " + (nodeUpgradeCoreLimit + 1) + "]");
     for (let i = 0; i < numNodes; i++) {
         let cost = ns.hacknet.getCoreUpgradeCost(i, nodeUpgradeCoreLimit);
         if (!isFinite(cost)) {
@@ -65,7 +65,7 @@ export async function main(ns) {
         }
         ns.hacknet.upgradeCore(i, nodeUpgradeCoreLimit);
     }
-    ns.tprint("All nodes fully upgraded to max cores");
+    ns.tprintf("INFO: All nodes fully upgraded to max cores");
 }
 
 function myMoney(ns) {

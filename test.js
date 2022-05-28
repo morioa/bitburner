@@ -4,6 +4,7 @@ import * as breachUtil from "./util.breach.js";
 import * as targetUtil from "./util.target.js";
 import * as tableUtil from "./util.table.js";
 import * as isUtil from "./util.is.js";
+import {getRandomIntInclusive} from "./util.common.js";
 
 export async function main(ns) {
     //ns.tprint("First hackable host: " + targetUtil.getFirstHackableHost(ns).host);
@@ -157,7 +158,60 @@ export async function main(ns) {
     }
     */
 
-    ns.tprint(targetUtil.getUnbreachedHosts(ns));
+    //ns.tprint(targetUtil.getUnbreachedHosts(ns));
+
+    /*
+    let mountains = [
+        { name: "Monte Falco", height: 1658, place: "Parco Foreste Casentinesi" },
+        { name: "Monte Falterona", height: 1654, place: "Parco Foreste Casentinesi" },
+        { name: "Poggio Scali", height: 1520, place: "Parco Foreste Casentinesi" },
+        { name: "Pratomagno", height: 1592, place: "Parco Foreste Casentinesi" },
+        { name: "Monte Amiata", height: 1738, place: "Siena" }
+    ];
+
+    let doc = eval("document");
+    let table = doc.querySelector("table");
+    let data = Object.keys(mountains[0]);
+    generateTable(doc, table, mountains);
+    generateTableHead(doc, table, data);
+    */
+
+    /*
+    const output = "WARN:\n\n" +
+        "==[NOTICE]=================================\n" +
+        ">>>  Target money reached: $16,000,000  <<<\n" +
+        "===========================================\n\n";
+    ns.tprintf(output);
+    */
+
+    //beep(ns);
+    //ns.run("play.js", 1, "drip");
+
+    let workingElemId = commonUtil.working(ns);
+    await ns.sleep(2000);
+    commonUtil.working(ns, workingElemId);
+}
+
+function generateTableHead(doc, table, data) {
+    let thead = table.createTHead();
+    let row = thead.insertRow();
+    for (let key of data) {
+        let th = doc.createElement("th");
+        let text = doc.createTextNode(key);
+        th.appendChild(text);
+        row.appendChild(th);
+    }
+}
+
+function generateTable(doc, table, data) {
+    for (let element of data) {
+        let row = table.insertRow();
+        for (let key in element) {
+            let cell = row.insertCell();
+            let text = doc.createTextNode(element[key]);
+            cell.appendChild(text);
+        }
+    }
 }
 
 function findNextSmallestKey(ns, data, startFrom) {

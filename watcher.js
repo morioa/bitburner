@@ -4,6 +4,8 @@ import * as targetUtil from "./util.target.js";
 import * as breachUtil from "./util.breach.js";
 import * as isUtil from "./util.is.js";
 
+const pollDelay = 5000;
+
 export async function main(ns) {
     let watchWhat = (ns.args[0] == undefined)
         ? "undefined"
@@ -21,8 +23,12 @@ export async function main(ns) {
             await rep(ns);
             break;
 
+        case "money":
+            await money(ns);
+            break;
+
         default:
-            ns.tprint("Script requires 'new', 'list', or 'rep' as the first argument");
+            ns.tprintf("ERROR: Script requires 'new', 'list', 'rep', or 'money' as the first argument");
     }
 }
 
@@ -36,12 +42,10 @@ async function newTarget(ns) {
     while (true) {
         let newTargets = targetUtil.list(ns, moneyThresh, 1).map(t => t["host"]);
         if (!isUtil.arrayEqual(ns, prevTargets, newTargets)) {
-            commonUtil.showNotice(ns, "New target(s) exist");
+            commonUtil.showNotice(ns, "Watcher found new target(s)");
             prevTargets = newTargets;
 
-            // comment out the line below if it yields an error
-            // it loads singularity.connect which costs 32GB
-            beep(ns);
+            commonUtil.play(ns, "beep");
             await ns.sleep(1000);
 
             await breachUtil.breachAll(ns, targetUtil.getUnbreachedHosts(ns));
@@ -51,11 +55,11 @@ async function newTarget(ns) {
             }
 
             if (Object.entries(targetUtil.getUnbreachedHosts(ns)).length === 0) {
-                ns.tprint("All available hosts and targets breached and attacked -- TERMINATING SELF");
+                ns.tprintf("WARNING: All available hosts and targets breached and attacked -- TERMINATING SELF");
                 ns.exit();
             }
         }
-        await ns.sleep(5000);
+        await ns.sleep(pollDelay);
     }
 }
 
@@ -64,57 +68,69 @@ async function listTargets(ns) {
         ? ns.args[1]
         : 0;
     while (true) {
-        ns.run("findTargetHosts.js", 1, moneyThresh, 1);
-        await ns.sleep(5000);
+        ns.run("findTargets.js", 1, moneyThresh, 1);
+        await ns.sleep(pollDelay);
     }
 }
 
+/*
 async function rep(ns) {
-    let entityType = ns.args[1];
-    let entity = ns.args[2];
-    let targetRep = (isUtil.numberValid(ns, ns.args[3]))
+    const entityType = ns.args[1];
+    const entity = ns.args[2];
+    const targetRep = (isUtil.numberValid(ns, ns.args[3]))
         ? ns.args[3]
         : 0;
-    let getRep = {
+    const getRep = {
         company: ns.singularity.getCompanyRep,
         faction: ns.singularity.getFactionRep
     };
 
     if (!isUtil.entityTypeValid(ns, entityType)) {
-        ns.tprint("Invalid entity type: " + entityType);
+        ns.tprintf("ERROR: Invalid entity type: " + entityType);
         ns.exit();
     }
 
-    let entityRep = getRep[entityType](entity);
-    if (entityRep < 0) {
-        ns.tprint("Invalid entity: " + entity);
-        ns.exit();
+    while (true) {
+        let entityRep = getRep[entityType](entity);
+        if (entityRep < 0) {
+            ns.tprintf("ERROR: Invalid entity: " + entity);
+            ns.exit();
+        }
+
+        if (entityRep >= targetRep) {
+            commonUtil.showNotice(ns, commonUtil.upperFirstLetter(ns, entityType) + " '" + entity + "' target rep reached: " + targetRep);
+
+            // comment out the line below if it yields an error
+            // it loads singularity.connect which costs 32GB
+            beep(ns);
+
+            ns.exit();
+        }
+
+        await ns.sleep(pollDelay);
     }
-
-    if (entityRep >= targetRep) {
-        commonUtil.showNotice(ns, commonUtil.upperFirstLetter(ns, entityType) + " '" + entity + "' target rep reached: " + targetRep);
-
-        // comment out the line below if it yields an error
-        // it loads singularity.connect which costs 32GB
-        beep(ns);
-
-        ns.exit();
-    }
-
-    await ns.sleep(5000);
 }
+*/
 
-function beep(ns) {
-    if (ns.getServerMaxRam("home") - ns.getServerUsedRam("home") >= 32) {
-        var context = new AudioContext();
-        var oscillator = context.createOscillator();
-        oscillator.type = "sine";
-        oscillator.frequency.value = 800;
-        oscillator.connect(context.destination);
-        oscillator.start();
-        // Beep for 500 milliseconds
-        setTimeout(function () {
-            oscillator.stop();
-        }, 100);
+async function money(ns) {
+    const targetMoney = ns.args[1];
+    const note = (ns.args[2] != undefined)
+        ? ` (${ns.args[2]})`
+        : "";
+
+    if (!isUtil.numberValid(ns, targetMoney)) {
+        ns.tprintf("ERROR: Invalid target money entry: " + targetMoney);
+        ns.exit();
+    }
+
+    while (true) {
+        let playerMoney = ns.getServerMoneyAvailable("home");
+        if (playerMoney >= targetMoney) {
+            commonUtil.showNotice(ns, "Target money reached: " + commonUtil.formatMoney(ns, targetMoney) + note);
+            commonUtil.play(ns, "trek");
+            ns.exit();
+        }
+
+        await ns.sleep(pollDelay);
     }
 }

@@ -4,5 +4,6 @@ export async function main(ns) {
 
     while (true) {
         await ns.hack(target);
+        await ns.sleep(100);
     }
 }

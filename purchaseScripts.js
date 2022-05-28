@@ -40,7 +40,7 @@ function buy(ns) {
 
 function showReminder(ns, reason) {
     let moneyReq = commonUtil.formatMoney(ns, moneyTor + moneyScripts);
-    let output = "\n\n";
+    let output = "";
 
     switch (reason) {
         case "api":
@@ -57,7 +57,7 @@ function showReminder(ns, reason) {
 
     output += "This script is a work-in-progress.\n\n";
 
-    ns.tprint(output);
+    ns.tprintf(output);
 
     //ns.tprint(ns.getDarkwebPrograms());
 

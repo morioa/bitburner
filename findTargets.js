@@ -19,13 +19,12 @@ async function list(ns) {
         : 0;
     let hackableOnly = (isUtil.numberEqual(ns, ns.args[1], 1));
 
-    ns.tprint("Listing "
-        + ((hackableOnly) ? "hackable" : "all") + " hosts with at least "
-        + commonUtil.formatMoney(ns, moneyThresh) + " max money");
-
     //ns.tprint(targets.list(ns, moneyThresh, hackableOnly));
 
     tableUtil.renderTable(ns, "TARGETS", targetUtil.list(ns, moneyThresh, hackableOnly), true);
+    ns.tprintf("INFO: Listed "
+        + ((hackableOnly) ? "hackable" : "all") + " hosts with at least "
+        + commonUtil.formatMoney(ns, moneyThresh) + " max money");
 }
 
 async function breach(ns) {

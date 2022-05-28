@@ -5,6 +5,13 @@ import * as targetUtil from "./util.target.js";
 import * as tableUtil from "./util.table.js";
 import * as isUtil from "./util.is.js";
 
+// If you find that the attack kills your game, you should adjust the attack
+// threshold to a lower value and/or bump up the delay slightly. This slows
+// down the attack, so it will take longer for all attacks to start on all
+// usable hosts.
+const attackThreshold = 30; // Number of targets before a delay is imposed
+const attackThresholdDelay = 100; // Delay between each host loop
+
 const fromOpts = {0:"home", 1:"owned", 2:"purchased", 3:"other", 4:"all"};
 const fromDefault = 4;
 
@@ -23,17 +30,16 @@ const algos = {
         {file: "_weaken.js", weight: 0.15}
     ]
 };
-const algoType = "loop";
-const algo = algos[algoType];
+let algoType = "loop";
+let algo = algos[algoType];
 
 export async function main(ns) {
     ns.disableLog("ALL");
     ns.enableLog("exec");
 
     let attackParams = getAttackParams(ns);
-    ns.tprint(attackParams);
+    await ns.sleep(100);
     await attackDistributedAll(ns, attackParams['target']);
-
     await ns.sleep(1);
 }
 
@@ -48,49 +54,49 @@ function getAttackParams(ns) {
     from = ns.args[0];
     if (from == undefined) {
         from = fromDefault;
-        ns.tprint("Using default 'from': " + fromDefault + " (" + fromOpts[fromDefault] + ")");
+        ns.tprintf("INFO: Using default 'from': " + fromDefault + " (" + fromOpts[fromDefault] + ")");
     } else if (!(from in fromOpts)) {
         from = fromDefault;
-        ns.tprint("Specified 'from' does not exist... using default: " + fromDefault + " (" + fromOpts[fromDefault] + ")");
+        ns.tprintf("WARNING: Specified 'from' does not exist... using default: " + fromDefault + " (" + fromOpts[fromDefault] + ")");
     } else {
-        ns.tprint("Using specified 'from': " + from + " (" + fromOpts[from] + ")");
+        ns.tprintf("INFO: Using specified 'from': " + from + " (" + fromOpts[from] + ")");
     }
 
     model = ns.args[1];
     if (model == undefined) {
         model = modelDefault;
-        ns.tprint("Using default 'model': " + model + " (" + modelOpts[model] + ")");
+        ns.tprintf("INFO: Using default 'model': " + model + " (" + modelOpts[model] + ")");
     } else if (!(model in modelOpts)) {
         model = modelDefault;
-        ns.tprint("Specified 'model' does not exist... using default: " + model + " (" + modelOpts[model] + ")");
+        ns.tprintf("WARNING: Specified 'model' does not exist... using default: " + model + " (" + modelOpts[model] + ")");
     } else {
-        ns.tprint("Using specified 'model': " + model + " (" + modelOpts[model] + ")");
+        ns.tprintf("INFO: Using specified 'model': " + model + " (" + modelOpts[model] + ")");
     }
 
     target = ns.args[2];
     if (model > 1) {
         if (target == undefined) {
             target = targetMoneyThreshDefault;
-            ns.tprint("Using default 'target' money threshold: " + target);
+            ns.tprintf("INFO: Using default 'target' money threshold: " + target);
         } else if (isNaN(target)) {
             target = targetMoneyThreshDefault;
-            ns.tprint("Individual targets ignored for the specified 'model'");
-            ns.tprint("Using default 'target' money threshold: " + target);
+            ns.tprintf("WARNING: Individual targets ignored for the specified 'model'");
+            ns.tprintf("INFO: Using default 'target' money threshold: " + target);
         } else {
             target = Math.floor(target);
-            ns.tprint("Using specified 'target' money threshold: " + target);
+            ns.tprintf("INFO: Using specified 'target' money threshold: " + target);
         }
     } else {
         if (model === 0) {
             target = targetUtil.getLastHackableHost(ns).host;
-            ns.tprint("Target acquired: " + target);
+            ns.tprintf("INFO: Target acquired: " + target);
         } else {
             if (target == undefined || ns.serverExists(target) === false) {
-                ns.tprint("Specified target server does not exist: " + target);
+                ns.tprintf("WARNING: Specified target server does not exist: " + target);
                 target = targetUtil.getLastHackableHost(ns).host;
-                ns.tprint("Targeting last hackable server instead: " + target);
+                ns.tprintf("WARNING: Targeting last hackable server instead: " + target);
             } else {
-                ns.tprint("Target acquired: " + target);
+                ns.tprintf("INFO: Target acquired: " + target);
             }
         }
     }
@@ -117,6 +123,9 @@ async function attackDistributedAll(ns, moneyThresh) {
     let targetsAttacked = [];
 
     tableUtil.renderTable(ns, "TARGETS", allTargets, true);
+    await ns.sleep(1000);
+    let workingElemId = commonUtil.working(ns);
+    await ns.sleep(100);
 
     // Loop through usable hosts
     for (const host of hosts) {
@@ -136,7 +145,8 @@ async function attackDistributedAll(ns, moneyThresh) {
             }
         }
 
-        // Determine how much RAM is available for use on this host
+        // Determine how much RAM is available for use on this host and which algorithm to use
+        algo = determineAlgo(ns, host);
         const hostRamReserved = (host === "home")
             ? commonUtil.getHomeRamReserved(ns)
             : 0;
@@ -240,11 +250,23 @@ async function attackDistributedAll(ns, moneyThresh) {
         }
 
         hostsUsedCount++;
+
+        if (targetsAttacked.length > attackThreshold) {
+            await ns.sleep(attackThresholdDelay);
+        }
     }
 
-    ns.tprint("Targets attacked: " + targetsAttacked.length);
-    ns.tprint(targetsAttacked);
-    ns.tprint("Hosts utilized: " + hostsUsedCount);
+    commonUtil.working(ns, workingElemId);
+
+    ns.tprintf("INFO: Targets attacked: " + targetsAttacked.length);
+    //ns.tprint(targetsAttacked);
+    ns.tprintf("INFO: Hosts utilized: " + hostsUsedCount);
+}
+
+function determineAlgo(ns, host) {
+    return (ns.getServerMaxRam(host) < 64)
+        ? algos.consolidated
+        : algos.loop;
 }
 
 function showHelp(ns) {
@@ -279,5 +301,5 @@ function showHelp(ns) {
         "    equally using all servers you own:\n" +
         "         run " + commonUtil.getAttackScript(ns) + " 1 2 10000000000\n\n";
 
-    ns.tprint(output);
+    ns.tprintf(output);
 }

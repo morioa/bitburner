@@ -1,3 +1,5 @@
+import * as commonUtil from "./util.common";
+
 /** @param {NS} ns **/
 
 export function valueEqual(ns, val1, val2) {

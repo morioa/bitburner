@@ -8,7 +8,7 @@ const vertLineChar = "|";
 
 export function renderTable(ns, title, data, compact = false) {
     if (data.length === 0) {
-        ns.tprint("No data to render");
+        ns.tprintf("WARNING: No data to render");
         ns.exit();
     }
 
@@ -43,12 +43,12 @@ export function renderTable(ns, title, data, compact = false) {
         output += drawTableBorder(ns, maxLengths);
     }
 
-    ns.tprint(output);
+    ns.tprintf(output);
 }
 
 function drawTableTitle(ns, title) {
     let maxLengths = [title.length];
-    return "\n\n" + drawTableBorder(ns, maxLengths) + drawTableLine(ns, true, maxLengths, [title]);
+    return "\n" + drawTableBorder(ns, maxLengths) + drawTableLine(ns, true, maxLengths, [title]);
 }
 
 function drawTableLine(ns, compact, maxLengths, data, isHeader = false) {

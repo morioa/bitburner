@@ -4,5 +4,6 @@ export async function main(ns) {
 
     while (true) {
         await ns.grow(target);
+        await ns.sleep(100);
     }
 }

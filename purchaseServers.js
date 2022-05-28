@@ -2,6 +2,7 @@
 import * as commonUtil from "./util.common.js";
 import * as targetUtil from "./util.target.js";
 import * as tableUtil from "./util.table.js";
+import * as isUtil from "./util.is.js";
 
 const defaultRam = 2048;
 
@@ -31,28 +32,22 @@ export async function main(ns) {
         }
     }
 
-    repurchase = ns.args[1];
-    repurchase = (repurchase == undefined
-    || (repurchase.toString().toLowerCase() !== "true"
-    && Number(repurchase) !== 1))
-        ? 0
-        : 1;
+    repurchase = (isUtil.numberEqual(ns, ns.args[1], 1));
 
-    if (repurchase) {
-        let servers = ns.getPurchasedServers();
-        for (let server of servers) {
-            if (ns.getServerMaxRam(server) >= ram) {
-                // Only repurchase if the new server will have more RAM
-                continue;
-            }
-            ns.killall(server);
-            ns.deleteServer(server);
-        }
-    }
-
-    let i = commonUtil.getNextHostPurchasedId(ns);
-
+    let i = 0;
     while (i < ns.getPurchasedServerLimit()) {
+        let servers = ns.getPurchasedServers();
+        let server = commonUtil.getHostPurchasedPrefix(ns) + i;
+        let serverExists = (servers.includes(server));
+
+        if ((!repurchase && serverExists) ||
+            (repurchase && ns.getServerMaxRam(server) >= ram)) {
+            // Skip if not repurchase and the server exists, or the server has equal
+            // or more RAM than the repurchase order
+            ++i;
+            continue;
+        }
+
         // Check if we have enough money to purchase a server
         if (ns.getServerMoneyAvailable("home") > ns.getPurchasedServerCost(ram)) {
             // If we have enough money, then:
@@ -60,10 +55,15 @@ export async function main(ns) {
             //  2. Copy our hacking script onto the newly-purchased server
             //  3. Run our hacking script on the newly-purchased server with 3 threads
             //  4. Increment our iterator to indicate that we've bought a new server
-            let hostname = ns.purchaseServer(commonUtil.getNextHostPurchasedName(ns), ram);
+            if (repurchase && serverExists) {
+                ns.killall(server);
+                ns.deleteServer(server);
+            }
+
+            let hostname = ns.purchaseServer(server, ram);
             await ns.scp(hackScript, hostname);
             ns.exec(hackScript, hostname, Math.floor(ram / commonUtil.getHackScriptRamCost(ns)), target);
-            i++;
+            ++i;
         } else {
             await ns.sleep(10000);
         }
@@ -114,6 +114,6 @@ function showHelp(ns) {
         "    To repurchase all servers with less than 4096 GB of RAM:\n" +
         "         run " + commonUtil.getServerPurchaseScript(ns) + " 4096 1\n\n";
 
-    ns.tprint(output);
+    ns.tprintf(output);
     ns.exit();
 }
