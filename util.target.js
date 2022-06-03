@@ -9,7 +9,7 @@ export function list(ns, moneyThresh = 0, hackableOnly = 0) {
     for (let host of hosts) {
         let hostDetails = {};
         hostDetails["host"] = host;
-        hostDetails["moneyMax"] = ns.getServerMaxMoney(host);
+        hostDetails["moneyMax"] = Math.floor(ns.getServerMaxMoney(host));
         //hostDetails["moneyMaxFormatted"] = commonUtil.formatMoney(ns, hostDetails["moneyMax"]);
         hostDetails["moneyAvail"] = Math.floor(ns.getServerMoneyAvailable(host));
         //hostDetails["moneyAvailFormatted"] = commonUtil.formatMoney(ns, hostDetails["moneyAvail");
@@ -68,4 +68,8 @@ export function getLastHackableHost(ns, moneyThresh = 0) {
 
 export function getUnbreachedHosts(ns) {
     return list(ns).filter(h => !h.hasRootAccess);
+}
+
+export function getAllHosts(ns) {
+    return list(ns);
 }

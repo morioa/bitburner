@@ -66,7 +66,7 @@ export function listHostsConnections(ns, targetHost = null) {
         }
 
         if (targetHost === null || targetHost === host) {
-            hostsConns.push({"host":host, "connections":ns.scan(host).filter(h => h.indexOf(getHostPurchasedPrefix(ns)) < 0)});
+            hostsConns.push({host:host, connections:ns.scan(host).filter(h => h.indexOf(getHostPurchasedPrefix(ns)) < 0)});
         }
     }
     return hostsConns;
@@ -110,6 +110,68 @@ export function formatMoney(ns, money) {
     return "$" + parseInt(money).toString().replace(/(.)(?=(\d{3})+$)/g,'$1,');
 }
 
+export function formatNumber(ns, number, formatTo = "shorthand", includeMoneySymbol = false) {
+    if (number == undefined) {
+        return false;
+    }
+
+    const multiplier = {
+        q: 10**15, //Math.pow(10, 15),
+        t: 10**12, //Math.pow(10, 12),
+        b: 10**9,  //Math.pow(10, 9),
+        m: 10**6,  //Math.pow(10, 6),
+        k: 10**3   //Math.pow(10, 3)
+    };
+
+    const convert = {
+        shorthand: function(ns, number) {
+            for (let [k,v] of Object.entries(multiplier)) {
+                let calcVal = number.valueOf() / v;
+                if (calcVal >= 1 || k === "k") {
+                    number = (calcVal).toFixed(3) + k;
+                    break;
+                }
+            }
+            return number;
+        },
+        raw: function(ns, number, lastChar) {
+            return number.substring(0, number.length - 1).valueOf() * multiplier[lastChar];
+        }
+    }
+
+    number = number.toString().replace(/[$,]/g, "");  // convert $1,000,000.000k to 1000000.000k
+    const lastChar = number.substr(-1);
+    const isShorthand = multiplier.hasOwnProperty(lastChar);
+
+    if ((formatTo === "raw" && isShorthand) ||
+        (formatTo === "shorthand" && !isShorthand)) {
+        number = convert[formatTo](ns, number, lastChar);
+    } else if (formatTo === "shorthand" && isShorthand) {
+        number = convert["raw"](ns, number, lastChar);
+        number = convert["shorthand"](ns, number);
+    }
+
+    if (includeMoneySymbol) {
+        number = "$" + number;
+    }
+
+    return number;
+}
+
+export function formatNumberArrayOfObjectsColumns(ns, arr, cols, formatTo = "shorthand", includeMoneySymbol = false) {
+    let formattedObjArr = [];
+    for (let [k,v] of Object.entries(arr)) {
+        for (let col of cols) {
+            if (v.hasOwnProperty(col)) {
+                v[col] = formatNumber(ns, v[col], formatTo, includeMoneySymbol);
+            }
+        }
+        formattedObjArr.push(v);
+    }
+
+    return formattedObjArr;
+}
+
 export function getHomeRamReserved(ns) {
     let homeRamMax = ns.getServerMaxRam("home");
     let homeRamReserved = 0;
@@ -135,9 +197,13 @@ export function getRandomIntInclusive(ns, min, max) {
 
 export function working(ns, elemId = null) {
     const doc = eval("document");
+    const term = doc.getElementById('terminal');
+    if (term == undefined) {
+        return;
+    }
     if (elemId === null) {
         elemId = "custom_temp_elem_" + getRandomIntInclusive(ns, 0,9999);
-        doc.getElementById('terminal').insertAdjacentHTML("beforeend", "<p id='" + elemId + "' class='jss16653 MuiTypography-root MuiTypography-body1 css-cxl1tz' style='color: #999999;'>working...</p>");
+        term.insertAdjacentHTML("beforeend", "<p id='" + elemId + "' class='jss16653 MuiTypography-root MuiTypography-body1 css-cxl1tz' style='color: #999999;'>working...</p>");
         doc.getElementById(elemId).scrollIntoView();
         return elemId;
     } else {

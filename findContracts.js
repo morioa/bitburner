@@ -17,16 +17,17 @@ export async function main(ns) {
     //ns.tprint(contracts);
 
     /*
-    let contract = contracts[0];
-    ns.tprint(contract);
-
-    let contractFile = contract["contracts"][0];
-    let output = "\n\n" +
-        "Contract file: " + contractFile + "\n" +
-        "Contract type: " + ns.getContractType(contractFile, contract["host"]) + "\n" +
-        "Contract remaining tries: " + ns.getNumTriesRemaining(contractFile, contract["host"]) + "\n" +
-        "Contract description: " + ns.getContractDescription(contractFile, contract["host"]) + "\n" +
-        "Contract data: " + ns.getContractData(contractFile, contract["host"]) + "\n\n";
-    ns.tprint(output);
+    for (let [i,match] of Object.entries(contracts)) {
+        for (let [j,contract] of Object.entries(match["available contracts"])) {
+            let output = "\n" +
+                "Host:  " + match["host"] + "\n" +
+                "File:  " + contract + "\n";
+                //"Type:  " + ns.getContractType(contract, match["host"]) + "\n" +
+                //"Tries: " + ns.getNumTriesRemaining(contract, match["host"]) + "\n" +
+                //"Desc:  " + ns.getContractDescription(contract, match["host"]) + "\n" +
+                //"Data:  " + ns.getContractData(contract, match["host"]) + "\n\n";
+            ns.tprintf(output);
+        }
+    }
     */
 }

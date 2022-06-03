@@ -16,7 +16,8 @@ const scripts = [
     "DeepscanV1.exe",
     "DeepscanV2.exe",
     "AutoLink.exe",
-    "Formulas.exe"];
+    //"Formulas.exe"
+];
 
 export async function main(ns) {
     let apiReqMet = ns.fileExists(apiScript);
@@ -34,7 +35,9 @@ export async function main(ns) {
 function buy(ns) {
     ns.purchaseTor();
     for (let script of scripts) {
-        ns.purchaseProgram(script);
+        if (!ns.fileExists(script)) {
+            ns.purchaseProgram(script);
+        }
     }
 }
 

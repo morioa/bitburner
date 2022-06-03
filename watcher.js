@@ -73,7 +73,6 @@ async function listTargets(ns) {
     }
 }
 
-/*
 async function rep(ns) {
     const entityType = ns.args[1];
     const entity = ns.args[2];
@@ -81,8 +80,8 @@ async function rep(ns) {
         ? ns.args[3]
         : 0;
     const getRep = {
-        company: ns.singularity.getCompanyRep,
-        faction: ns.singularity.getFactionRep
+        company: ns.getCompanyRep,
+        faction: ns.getFactionRep
     };
 
     if (!isUtil.entityTypeValid(ns, entityType)) {
@@ -91,26 +90,27 @@ async function rep(ns) {
     }
 
     while (true) {
-        let entityRep = getRep[entityType](entity);
+        let entityRep = getRep[entityType](entity) + ns.getPlayer().workRepGained;
         if (entityRep < 0) {
             ns.tprintf("ERROR: Invalid entity: " + entity);
             ns.exit();
         }
 
+        ns.print(`entityRep: ${entityRep}, targetRep: ${targetRep}`);
         if (entityRep >= targetRep) {
-            commonUtil.showNotice(ns, commonUtil.upperFirstLetter(ns, entityType) + " '" + entity + "' target rep reached: " + targetRep);
+            commonUtil.showNotice(ns, commonUtil.upperFirstLetter(ns, entityType) + " '" + entity + "' target rep reached: " + commonUtil.formatNumber(ns, targetRep));
 
             // comment out the line below if it yields an error
             // it loads singularity.connect which costs 32GB
-            beep(ns);
-
-            ns.exit();
+            commonUtil.play(ns, "drip");
+            await ns.sleep(1000);
+            break;
         }
 
+        ns.print("targetRep not reached... sleeping");
         await ns.sleep(pollDelay);
     }
 }
-*/
 
 async function money(ns) {
     const targetMoney = ns.args[1];
@@ -125,12 +125,14 @@ async function money(ns) {
 
     while (true) {
         let playerMoney = ns.getServerMoneyAvailable("home");
+        ns.print(`playerMoney: ${playerMoney}, targetMoney: ${targetMoney}`);
         if (playerMoney >= targetMoney) {
             commonUtil.showNotice(ns, "Target money reached: " + commonUtil.formatMoney(ns, targetMoney) + note);
-            commonUtil.play(ns, "trek");
+            commonUtil.play(ns, "whistle");
             ns.exit();
         }
 
+        ns.print("targetMoney not reached... sleeping");
         await ns.sleep(pollDelay);
     }
 }

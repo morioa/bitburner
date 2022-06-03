@@ -7,35 +7,8 @@ import * as isUtil from "./util.is.js";
 import {getRandomIntInclusive} from "./util.common.js";
 
 export async function main(ns) {
-    //ns.tprint("First hackable host: " + targetUtil.getFirstHackableHost(ns).host);
-    //ns.tprint("Last hackable host: " + targetUtil.getLastHackableHost(ns).host);
-    //ns.tprint("Owned breach apps: " + breachUtil.countOwned(ns));
-    //ns.tprint("My hacking level: " + ns.getHackingLevel());
-    //ns.tprint("computek hacking level req: " + ns.getServerRequiredHackingLevel("computek"));
     /*
-    ns.tprint("--------------------------------------------------------------------------------");
-    ns.tprint(commonUtil.listHostsOwned(ns));
-    ns.tprint("--------------------------------------------------------------------------------");
-    ns.tprint(commonUtil.listHostsOther(ns));
-    ns.tprint("--------------------------------------------------------------------------------");
-    ns.tprint(commonUtil.getNextHostPurchasedName(ns));
-    */
-
-    //tableUtil.renderTable(ns, targetUtil.getTargetDetails(ns, 'n00dles'));
-    //let processes = commonUtil.findProcessByName(ns, commonUtil.getHackScript(ns));
-    //tableUtil.renderTable(ns, processes);
-
-    //let host = "syscore";
-    //ns.tprint((processes !== null && processes.filter(p => p.args[0] === host).length > 0) ? "found" : "not found");
-
-    //ns.tprint(commonUtil.listHosts(ns, "home", []));
-
-    //commonUtil.showNotice(ns, "New target exists: fulcrumassets");
-
-    //await ns.sleep(30000);
-
-    /*
-    let data = [81,105,127,119,101,173,148,155,33,81,156,162,76,83,54,19,83,186,78,39,168,191,139,74,141,120,96,20,145,143,98,143,117,2];
+    let data = [70,100,5,198,50,29,180,162,39,187,145,48,51,35];
     let currAction = "buy";
     let totalProfit = 0;
     let bsChain = [];
@@ -73,70 +46,12 @@ export async function main(ns) {
     ns.tprint("Total profit: " + totalProfit);
     */
 
-    //ns.tprint(ns.getOwnedSourceFiles());
-
-    /*
-    let entityType = "faction";
-    let getRep = {
-        company: getCompanyRep,
-        faction: getFactionRep
-    };
-    getRep[entityType](ns);
-    */
-
-    /*
-    let algos = {
-        consolidated: [
-            {file: "_chesterTheMolester.js", weight: 1.0}
-        ],
-        loop: [
-            {file: "_grow.js", weight: 0.77},
-            {file: "_hack.js", weight: 0.08},
-            {file: "_weaken.js", weight: 0.15}
-        ]
-    };
-    let algoType = "loop";
-    let algo = algos[algoType];
-    */
-
-    //ns.tprint(ns.getScriptRam(algo[0].file));
-    /*
-    for (let file of algo.map(x => x.file)) {
-        ns.tprint(file);
-    }
-    algo.sort((a,b) => a.weight - b.weight);
-    */
-
-    /*
-    for (const [i,script] of Object.entries(algo)) {
-        //ns.tprint(`${i}: ${script.file}`);
-        //ns.tprint(isUtil.numberEqual(ns, i, algo.length - 1));
-        ns.tprint(`${i} : ${Object.entries(algo).length - 1}`);
-    }
-
-    //ns.tprint(algo.reduce((acc, curr) => (acc > ns.getScriptRam(curr.file)) ? acc : ns.getScriptRam(curr.file), 0));
-
-    for (let [k, script] of Object.entries(algos)) {
-        for (let file of script.map(x => x.file)) {
-            ns.tprint("File: " + file);
-        }
-    }
-    */
-
     /*
     const tableChars = {
-        tlc: "╔",
-        trc: "╗",
-        blc: "",
-        brc: "",
-        ti:  "",
-        li:  "╠",
-        mi:  "",
-        ri:  "",
-        bi:  "",
-        hl:  "═",
-        vl:  "║",
-        s:   " "
+        tlc: "╔", ti:  "╦", trc: "╗",
+        li:  "╠", mi:  "╬", ri:  "╣",
+        blc: "╚", bi:  "╩", brc: "╝",
+        hl:  "═", vl:  "║", s:   " "
     };
 
     const output = "\n\n" +
@@ -148,17 +63,40 @@ export async function main(ns) {
     */
 
     /*
-    let hosts = targetUtil.list(ns);
-    for (const [i, host] of Object.entries(hosts.filter(h => !h.hasRootAccess))) {
-        ns.tprint(i,":",host.host);
-    }
+    let output = "WARN:\n\n" +
+        "+---------+\n" +
+        "| TARGETS |\n" +
+        "+----------+--------------+--------------+---------------+------------------+---------------+--------+--------------+--------------+\n" +
+        "| HOST     | MONEYMAX     | MONEYAVAIL   | SECURITYLEVEL | SECURITYLEVELMIN | HASROOTACCESS | MAXRAM | HACKLEVELREQ | PORTSOPENREQ |\n" +
+        "+----------+--------------+--------------+---------------+------------------+---------------+--------+--------------+--------------+\n" +
+        "| ecorp    | 149975329800 |  85725918471 |            50 |               33 | true          |      0 |         1117 |            5 |\n" +
+        "| megacorp | 167686662442 | 121232588853 |            67 |               33 | true          |      0 |         1219 |            5 |\n" +
+        "| ecorp    | 149975329800 |  85725918471 |            50 |               33 | true          |      0 |         1117 |            5 |\n" +
+        "| megacorp | 167686662442 | 121232588853 |            67 |               33 | true          |      0 |         1219 |            5 |\n" +
+        "| ecorp    | 149975329800 |  85725918471 |            50 |               33 | true          |      0 |         1117 |            5 |\n" +
+        "| megacorp | 167686662442 | 121232588853 |            67 |               33 | true          |      0 |         1219 |            5 |\n" +
+        "| ecorp    | 149975329800 |  85725918471 |            50 |               33 | true          |      0 |         1117 |            5 |\n" +
+        "| megacorp | 167686662442 | 121232588853 |            67 |               33 | true          |      0 |         1219 |            5 |\n" +
+        "+----------+--------------+--------------+---------------+------------------+---------------+--------+--------------+--------------+\n\n\n";
+    ns.tprintf(output);
 
-    for (const [i, host] of Object.entries(hosts)) {
-        ns.tprint(i,":",host.host);
-    }
+    output = "WARN:\n\n" +
+        "╔═════════╗\n" +
+        "║ TARGETS ║\n" +
+        "╠═════════╩╦══════════════╦══════════════╦═══════════════╦══════════════════╦═══════════════╦════════╦══════════════╦══════════════╗\n" +
+        "║ HOST     ║ MONEYMAX     ║ MONEYAVAIL   ║ SECURITYLEVEL ║ SECURITYLEVELMIN ║ HASROOTACCESS ║ MAXRAM ║ HACKLEVELREQ ║ PORTSOPENREQ ║\n" +
+        "╠══════════╬══════════════╬══════════════╬═══════════════╬══════════════════╬═══════════════╬════════╬══════════════╬══════════════╣\n" +
+        "║ ecorp    ║ 149975329800 ║  85725918471 ║            50 ║               33 ║ true          ║      0 ║         1117 ║            5 ║\n" +
+        "║ megacorp ║ 167686662442 ║ 121232588853 ║            67 ║               33 ║ true          ║      0 ║         1219 ║            5 ║\n" +
+        "║ ecorp    ║ 149975329800 ║  85725918471 ║            50 ║               33 ║ true          ║      0 ║         1117 ║            5 ║\n" +
+        "║ megacorp ║ 167686662442 ║ 121232588853 ║            67 ║               33 ║ true          ║      0 ║         1219 ║            5 ║\n" +
+        "║ ecorp    ║ 149975329800 ║  85725918471 ║            50 ║               33 ║ true          ║      0 ║         1117 ║            5 ║\n" +
+        "║ megacorp ║ 167686662442 ║ 121232588853 ║            67 ║               33 ║ true          ║      0 ║         1219 ║            5 ║\n" +
+        "║ ecorp    ║ 149975329800 ║  85725918471 ║            50 ║               33 ║ true          ║      0 ║         1117 ║            5 ║\n" +
+        "║ megacorp ║ 167686662442 ║ 121232588853 ║            67 ║               33 ║ true          ║      0 ║         1219 ║            5 ║\n" +
+        "╚══════════╩══════════════╩══════════════╩═══════════════╩══════════════════╩═══════════════╩════════╩══════════════╩══════════════╝\n";
+    ns.tprintf(output);
     */
-
-    //ns.tprint(targetUtil.getUnbreachedHosts(ns));
 
     /*
     let mountains = [
@@ -168,28 +106,73 @@ export async function main(ns) {
         { name: "Pratomagno", height: 1592, place: "Parco Foreste Casentinesi" },
         { name: "Monte Amiata", height: 1738, place: "Siena" }
     ];
+    tableUtil.renderTable(ns, "mountains", mountains, 1);
+
+    await ns.sleep(100);
 
     let doc = eval("document");
-    let table = doc.querySelector("table");
+    let term = doc.getElementById("terminal");
+    let elemId = "custom_elem_" + getRandomIntInclusive(ns, 0,9999);
+
+    term.insertAdjacentHTML("beforeend", "<table id='" + elemId + "' class='jss16653 MuiTypography-root MuiTypography-body1 css-cxl1tz' style='border: 1px solid #FFFF00; border-collapse: collapse;'></table>");
+
+    let table = doc.getElementById(elemId);
     let data = Object.keys(mountains[0]);
+
     generateTable(doc, table, mountains);
     generateTableHead(doc, table, data);
+    doc.getElementById(elemId).scrollIntoView();
     */
 
     /*
-    const output = "WARN:\n\n" +
-        "==[NOTICE]=================================\n" +
-        ">>>  Target money reached: $16,000,000  <<<\n" +
-        "===========================================\n\n";
-    ns.tprintf(output);
+    let doc = eval("document");
+    let term = doc.getElementById("terminal");
+    ns.tprint(term.tagName);
     */
 
-    //beep(ns);
-    //ns.run("play.js", 1, "drip");
+    ns.tprint(ns);
 
-    let workingElemId = commonUtil.working(ns);
-    await ns.sleep(2000);
-    commonUtil.working(ns, workingElemId);
+    //ns.tprint(commonUtil.formatNumber(ns, ns.args[0], ns.args[1], ns.args[2]));
+
+    /*
+    const allTargets = targetUtil.list(ns, 0, 1);
+    tableUtil.renderTable(
+        ns,
+        "TARGETS",
+        commonUtil.formatNumberArrayOfObjectsColumns(
+            ns,
+            allTargets,
+            ["moneyMax","moneyAvail"],
+            "shorthand",
+            true),
+        true
+    );
+    */
+
+    /*
+    let hosts = commonUtil.listHosts(ns, "home", []);
+    let servers = [];
+    let reportCols = ["hostname","hasAdminRights","backdoorInstalled"];
+    hosts.forEach(host => {
+        let server = ns.getServer(host);
+        if (server.purchasedByPlayer) {
+            return;
+        }
+
+        let reported = {};
+        Object.keys(server).filter(prop => {
+            if (reportCols.includes(prop)) {
+                reported[prop] = server[prop];
+            }
+        })
+        reported = Object.assign({"hostname":null}, reported);
+        servers.push(reported);
+        //servers.push(server);
+    });
+
+    //ns.tprint(servers);
+    tableUtil.renderTable(ns, "servers", servers, 1);
+    */
 }
 
 function generateTableHead(doc, table, data) {
@@ -197,7 +180,12 @@ function generateTableHead(doc, table, data) {
     let row = thead.insertRow();
     for (let key of data) {
         let th = doc.createElement("th");
-        let text = doc.createTextNode(key);
+        th.className = 'jss16653 MuiTypography-root MuiTypography-body1';
+        th.style.border = '1px solid #FFFF00';
+        th.style.padding = '1px 6px';
+        th.style.color = '#FFFF00';
+        th.style.textAlign = 'left';
+        let text = doc.createTextNode(key.toUpperCase());
         th.appendChild(text);
         row.appendChild(th);
     }
@@ -208,6 +196,13 @@ function generateTable(doc, table, data) {
         let row = table.insertRow();
         for (let key in element) {
             let cell = row.insertCell();
+            cell.className = 'jss16653 MuiTypography-root MuiTypography-body1';
+            //cell.style.border = '1px solid #FFFF44';
+            cell.style.borderWidth = '0 1px';
+            cell.style.borderStyle = 'solid';
+            cell.style.borderColor = '#FFFF00';
+            cell.style.padding = '0 6px';
+            cell.style.color = '#FFFF00';
             let text = doc.createTextNode(element[key]);
             cell.appendChild(text);
         }

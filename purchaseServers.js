@@ -80,8 +80,8 @@ function showServerPurchaseTable(ns) {
         let serverCostMax = serverCostOne * maxServers;
         costs.push({
             "ram (in GB)": ram,
-            "cost for one": commonUtil.formatMoney(ns, serverCostOne),
-            "cost for max": commonUtil.formatMoney(ns, serverCostMax)
+            "cost for one": commonUtil.formatNumber(ns, serverCostOne, "shorthand", true),
+            "cost for max": commonUtil.formatNumber(ns, serverCostMax, "shorthand", true)
         });
     }
 

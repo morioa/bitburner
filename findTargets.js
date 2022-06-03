@@ -7,7 +7,9 @@ import * as breachUtil from "./util.breach";
 
 export async function main(ns) {
     if (isUtil.valueEqual(ns, ns.args[0], "breach")) {
-        await breach(ns);
+        await breach(ns, ns.args[1]);
+    } else if (isUtil.valueEqual(ns, ns.args[0], "backdoor")) {
+        await breachUtil.backdoorAll(ns);
     } else {
         await list(ns);
     }
@@ -27,6 +29,6 @@ async function list(ns) {
         + commonUtil.formatMoney(ns, moneyThresh) + " max money");
 }
 
-async function breach(ns) {
-    await breachUtil.breachAll(ns, targetUtil.getUnbreachedHosts(ns));
+async function breach(ns, installBackdoor) {
+    await breachUtil.breachAll(ns, isUtil.numberEqual(ns, installBackdoor, 1));
 }
