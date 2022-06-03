@@ -64,7 +64,7 @@ run attack.js 4 2 10000000000
 
 [_chesterTheMolester.js](https://github.com/morioa/bitburner/blob/master/_chesterTheMolester.js)
 
-This guy is the one that gets the most action, getting distributed all over the place and performing weaken, grow, and hack actions against a specified target. This script is only used when the "consolidated" algorithm is chosen for the attack. This was based on the original script from the tutorial and is not the most efficient method of attack, thus it is no longer the default script used by the attack script.
+This guy is the one that gets the most action, getting distributed all over the place and performing weaken, grow, and hack actions against a specified target. This script is used by `attack.js` when the "consolidated" algorithm is chosen for the attack. This was based on the original script from the tutorial and is not the most efficient method of attack, thus it is no longer the default script used by the attack script.
 
 *__NOTE__: This script should be used instead of `attack.js` in the early game, when your "home" server has limited RAM, for however many threads it can handle.*
 
