@@ -15,10 +15,15 @@ export function renderTable(ns, title, data, asTable = false) {
         ns.exit();
     }
 
+    let doc = eval("document"),
+        term = doc.getElementById("terminal");
+
+    if (term == undefined) {
+        asTable = false;
+    }
+
     if (asTable) {
-        let doc = eval("document"),
-            term = doc.getElementById("terminal"),
-            li = doc.createElement("li"),
+        let li = doc.createElement("li"),
             table = doc.createElement("table"),
             caption = table.createCaption(),
             dataKeys = Object.keys(data[0]);
@@ -41,7 +46,7 @@ export function renderTable(ns, title, data, asTable = false) {
         generateTable(ns, doc, table, data);
         generateTableHead(ns, doc, table, dataKeys);
 
-        table.appendChild(caption);
+        table.insertBefore(caption, table.firstChild);
         li.appendChild(table);
         term.appendChild(li);
         li.scrollIntoView();
@@ -169,8 +174,12 @@ function generateTable(ns, doc, table, data) {
                 value.match(/\$?\d+\.\d{3}[kmbtq]?/) !== null
             ) {
                 cell.style.textAlign = "right";
+
+                if (key.toLowerCase().indexOf("money") >= 0) {
+                    //value = ns.nFormat(value, "($0.000a)");
+                }
             }
-            let text = doc.createTextNode(element[key]);
+            let text = doc.createTextNode(value);
             cell.appendChild(text);
         }
     }

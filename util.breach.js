@@ -3,9 +3,13 @@ import * as commonUtil from "./util.common.js";
 
 const portApps = [ "BruteSSH.exe", "FTPCrack.exe", "relaySMTP.exe", "HTTPWorm.exe", "SQLInject.exe" ];
 
-export async function breachAll(ns, hosts) {
+export async function breachAll(ns, hosts, installBackdoor) {
     for (const [i, host] of Object.entries(hosts.filter(h => !h.hasRootAccess))) {
         await breachHost(ns, host.host);
+    }
+
+    if (installBackdoor) {
+        await backdoorAll(ns);
     }
 }
 
@@ -26,7 +30,7 @@ export async function breachHost(ns, host) {
         return false;
     }
 
-    ns.tprint("Breaching " + host);
+    ns.tprint(`Breaching '${host}'`);
 
     for (const app of portApps) {
         if (isOwned(ns, app)) {
@@ -48,22 +52,22 @@ export async function backdoorAll(ns) {
         for (const conn of h.connections) {
             ns.tprintf(`${h.host} => ${conn}`);
             await backdoorHost(ns, conn, h.host);
-            ns.tprintf(`INFO: Reconnecting to ${h.host}`);
-            if (!ns.connect(h.host)) {
+            ns.tprintf(`INFO: Reconnecting to '${h.host}'`);
+            if (!ns.singularity.connect(h.host)) {
                 ns.tprintf("ERROR: ...failed");
                 return;
             }
             ns.tprintf("INFO: ...succeeded");
         }
     }
-    ns.connect("home");
+    ns.singularity.connect("home");
     commonUtil.showNotice(ns, "Backdoor processing complete");
     commonUtil.play(ns, "trek");
 }
 
 export async function backdoorHost(ns, host, parent = null) {
-    ns.tprintf(`INFO: Connecting to ${host}`);
-    if (!ns.connect(host)) {
+    ns.tprintf(`INFO: Connecting to '${host}'`);
+    if (!ns.singularity.connect(host)) {
         ns.tprintf("ERROR: ...failed");
         return;
     }

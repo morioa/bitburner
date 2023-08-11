@@ -38,6 +38,7 @@ export async function main(ns) {
     ns.enableLog("exec");
 
     let attackParams = getAttackParams(ns);
+    ns.write(commonUtil.getAttackLogFile(ns), JSON.stringify(attackParams), "w");
     await ns.sleep(100);
     await attackDistributedAll(ns, attackParams['target']);
     await ns.sleep(1);
@@ -54,49 +55,49 @@ function getAttackParams(ns) {
     from = ns.args[0];
     if (from == undefined) {
         from = fromDefault;
-        ns.tprintf("INFO: Using default 'from': " + fromDefault + " (" + fromOpts[fromDefault] + ")");
+        ns.tprintf(`INFO: Using default 'from': ${fromDefault} (${fromOpts[fromDefault]})`);
     } else if (!(from in fromOpts)) {
         from = fromDefault;
-        ns.tprintf("WARNING: Specified 'from' does not exist... using default: " + fromDefault + " (" + fromOpts[fromDefault] + ")");
+        ns.tprintf(`WARNING: Specified 'from' does not exist... using default: ${fromDefault} (${fromOpts[fromDefault]})`);
     } else {
-        ns.tprintf("INFO: Using specified 'from': " + from + " (" + fromOpts[from] + ")");
+        ns.tprintf(`INFO: Using specified 'from': ${from} (${fromOpts[from]})`);
     }
 
     model = ns.args[1];
     if (model == undefined) {
         model = modelDefault;
-        ns.tprintf("INFO: Using default 'model': " + model + " (" + modelOpts[model] + ")");
+        ns.tprintf(`INFO: Using default 'model': ${model} (${modelOpts[model]})`);
     } else if (!(model in modelOpts)) {
         model = modelDefault;
-        ns.tprintf("WARNING: Specified 'model' does not exist... using default: " + model + " (" + modelOpts[model] + ")");
+        ns.tprintf(`WARNING: Specified 'model' does not exist... using default: ${model} (${modelOpts[model]})`);
     } else {
-        ns.tprintf("INFO: Using specified 'model': " + model + " (" + modelOpts[model] + ")");
+        ns.tprintf(`INFO: Using specified 'model': ${model} (${modelOpts[model]})`);
     }
 
     target = ns.args[2];
     if (model > 1) {
         if (target == undefined) {
             target = targetMoneyThreshDefault;
-            ns.tprintf("INFO: Using default 'target' money threshold: " + target);
+            ns.tprintf(`INFO: Using default 'target' money threshold: ${target}`);
         } else if (isNaN(target)) {
             target = targetMoneyThreshDefault;
             ns.tprintf("WARNING: Individual targets ignored for the specified 'model'");
-            ns.tprintf("INFO: Using default 'target' money threshold: " + target);
+            ns.tprintf(`INFO: Using default 'target' money threshold: ${target}`);
         } else {
             target = Math.floor(target);
-            ns.tprintf("INFO: Using specified 'target' money threshold: " + target);
+            ns.tprintf(`INFO: Using specified 'target' money threshold: ${target}`);
         }
     } else {
         if (model === 0) {
             target = targetUtil.getLastHackableHost(ns).host;
-            ns.tprintf("INFO: Target acquired: " + target);
+            ns.tprintf(`INFO: Target acquired: ${target}`);
         } else {
             if (target == undefined || ns.serverExists(target) === false) {
-                ns.tprintf("WARNING: Specified target server does not exist: " + target);
+                ns.tprintf(`WARNING: Specified target server does not exist: ${target}`);
                 target = targetUtil.getLastHackableHost(ns).host;
-                ns.tprintf("WARNING: Targeting last hackable server instead: " + target);
+                ns.tprintf(`WARNING: Targeting last hackable server instead: ${target}`);
             } else {
-                ns.tprintf("INFO: Target acquired: " + target);
+                ns.tprintf(`INFO: Target acquired: ${target}`);
             }
         }
     }
@@ -156,8 +157,19 @@ async function attackDistributedAll(ns, moneyThresh) {
         const hostRamMinReq = algo.reduce((acc, curr) => acc + ns.getScriptRam(curr.file), 0)
 
         // Skip this host if the available RAM does not meet the minimum requirement
-        if (hostRamAvail < hostRamMinReq) {
-            //ns.print("Host '" + host + "' does not have enough RAM -- SKIPPING");
+        if (hostRamMax === 0) {
+            ns.tprint(`Host '${host}' has no RAM and cannot be used as an attacker -- SKIPPING`);
+            continue;
+        } else if (hostRamAvail < hostRamMinReq) {
+            ns.tprint(`Host '${host}' does not have enough RAM -- SKIPPING`);
+            ns.tprint(`
+    Host: ${host} 
+     Max: ${hostRamMax}
+Reserved: ${hostRamReserved}
+    Used: ${hostRamUsed}
+   Avail: ${hostRamAvail}
+Required: ${hostRamMinReq}
+`);
             continue;
         }
 
@@ -202,7 +214,7 @@ async function attackDistributedAll(ns, moneyThresh) {
             let targetThreadsPctUsed = 0;
 
             // If this is the last target and there are extra threads remaining, add them to the attack pool
-            ns.print(`${i} : ${Object.entries(thisHostTargets).length - 1}`);
+            //ns.print(`${i} : ${Object.entries(thisHostTargets).length - 1}`);
             if (isUtil.numberEqual(ns, i, Object.entries(thisHostTargets).length - 1)) {
                 // Determine if there is any threads left over to apply to the last target
                 hostRamUsed = ns.getServerUsedRam(host);
@@ -258,9 +270,9 @@ async function attackDistributedAll(ns, moneyThresh) {
 
     commonUtil.working(ns, workingElemId);
 
-    ns.tprintf("INFO: Targets attacked: " + targetsAttacked.length);
+    ns.tprintf(`INFO: Targets attacked: ${targetsAttacked.length}`);
     //ns.tprint(targetsAttacked);
-    ns.tprintf("INFO: Hosts utilized: " + hostsUsedCount);
+    ns.tprintf(`INFO: Hosts utilized: ${hostsUsedCount}`);
 }
 
 function determineAlgo(ns, host) {
@@ -270,36 +282,48 @@ function determineAlgo(ns, host) {
 }
 
 function showHelp(ns) {
-    let output = "\n\n" +
-        "Usage:   run " + commonUtil.getAttackScript(ns) + " [from] [model] [target]\n\n" +
-        "from     [optional] Can be the string 'help' (to show this help) or any\n" +
-        "         integer '0-4' [0:\"home\", 1:\"owned\", 2:\"purchased\", 3:\"other\",\n" +
-        "         4:\"all\"] (from which servers to mount the attack). Defaults\n" +
-        "         to '" + fromDefault + "' if not passed.\n\n" +
-        "model    [optional] Can be any integer '0-3' [0:\"last\", 1:\"targeted\",\n" +
-        "         2:\"distributed\", 3:\"distributed/weighted\"] to establish\n" +
-        "         which method to use for the attack. Defaults to '" + modelDefault + "' if not\n" +
-        "         passed.\n\n" +
-        "target   [optional] If model '0' or '1' is specified, then this must be\n" +
-        "         be a valid target hostname, otherwise the attack will default\n" +
-        "         to the 'last' target. If model '2' or '3' is specified, then\n" +
-        "         the specified target (integer) will be used as a Max Money\n" +
-        "         filter, only attacking (all hackable) targets that have a Server\n" +
-        "         Max Money value equal to or greater than the specified target,\n" +
-        "         otherwise it will default to '" + targetMoneyThreshDefault + "' and assume all hackable\n" +
-        "         targets are to be attacked.\n\n" +
-        "Examples:\n\n" +
-        "    To show this help:\n" +
-        "         run " + commonUtil.getAttackScript(ns) + " help\n\n" +
-        "    To attack with default options:\n" +
-        "         run " + commonUtil.getAttackScript(ns) + "\n\n" +
-        "    To attack the default target from rooted servers you do not own:\n" +
-        "         run " + commonUtil.getAttackScript(ns) + " 3\n\n" +
-        "    To attack a specified target from your home server:\n" +
-        "         run " + commonUtil.getAttackScript(ns) + " 0 1 n00dles\n\n" +
-        "    To attack all hackable targets that have at least 10b max money\n" +
-        "    equally using all servers you own:\n" +
-        "         run " + commonUtil.getAttackScript(ns) + " 1 2 10000000000\n\n";
+    let output = `
+This script will perform attacks against hackable targets using default
+or user-specified parameters.
 
+Usage:   run ${commonUtil.getAttackScript(ns)} [from] [model] [target]
+
+from     [optional] Can be the string 'help' (to show this help) or any
+         integer '0-4' [0:"home", 1:"owned", 2:"purchased", 3:"other",
+         4:"all"] (from which servers to mount the attack). Defaults
+         to '${fromDefault}' if not passed.
+ 
+model    [optional] Can be any integer '0-3' [0:"last", 1:"targeted",
+         2:"distributed", 3:"distributed/weighted"] to establish
+         which method to use for the attack. Defaults to '${modelDefault}' if not
+         passed.
+ 
+target   [optional] If model '0' or '1' is specified, then this must be
+         be a valid target hostname, otherwise the attack will default
+         to the 'last' target. If model '2' or '3' is specified, then
+         the specified target (integer) will be used as a Max Money
+         filter, only attacking (all hackable) targets that have a 
+         Server Max Money value equal to or greater than the specified 
+         target, otherwise it will default to '${targetMoneyThreshDefault}' and assume 
+         all hackable targets are to be attacked.
+ 
+Examples:
+
+    To show this help:
+         run ${commonUtil.getAttackScript(ns)} help
+ 
+    To attack with default options:
+         run ${commonUtil.getAttackScript(ns)}
+         
+    To attack all hackable targets with at least $1m max money
+    using default options (most common usage):
+         run ${commonUtil.getAttackScript(ns)} ${fromDefault} ${modelDefault} 1000000
+ 
+    To attack the default target from rooted servers you do not own:
+         run ${commonUtil.getAttackScript(ns)} 3
+ 
+    To attack a specified target from your home server:
+         run ${commonUtil.getAttackScript(ns)} 0 1 n00dles
+    `;
     ns.tprintf(output);
 }

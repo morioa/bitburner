@@ -24,11 +24,9 @@ async function list(ns) {
     //ns.tprint(targets.list(ns, moneyThresh, hackableOnly));
 
     tableUtil.renderTable(ns, "TARGETS", targetUtil.list(ns, moneyThresh, hackableOnly), true);
-    ns.tprintf("INFO: Listed "
-        + ((hackableOnly) ? "hackable" : "all") + " hosts with at least "
-        + commonUtil.formatMoney(ns, moneyThresh) + " max money");
+    ns.tprintf(`INFO: Listed ${(hackableOnly) ? "hackable" : "all"} hosts with at least ${commonUtil.formatMoney(ns, moneyThresh)} max money`);
 }
 
-async function breach(ns, installBackdoor) {
-    await breachUtil.breachAll(ns, isUtil.numberEqual(ns, installBackdoor, 1));
+async function breach(ns, installBackdoor = false) {
+    await breachUtil.breachAll(ns, targetUtil.getUnbreachedHosts(ns), installBackdoor);
 }

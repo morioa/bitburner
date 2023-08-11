@@ -23,12 +23,16 @@ export async function main(ns) {
             await rep(ns);
             break;
 
+        case "stat":
+            await stat(ns);
+            break;
+
         case "money":
             await money(ns);
             break;
 
         default:
-            ns.tprintf("ERROR: Script requires 'new', 'list', 'rep', or 'money' as the first argument");
+            ns.tprintf("ERROR: Script requires 'new', 'list', 'rep', 'stat' or 'money' as the first argument");
     }
 }
 
@@ -51,7 +55,14 @@ async function newTarget(ns) {
             await breachUtil.breachAll(ns, targetUtil.getUnbreachedHosts(ns));
 
             if (autoAttack) {
-                await ns.run(commonUtil.getAttackScript(ns), 1, 4, 2, moneyThresh);
+                // use parameters from last attack log as those would
+                // likely be more relevant than the defaults since
+                // the watcher could be running for a long time
+                let ap = commonUtil.getLastAttackParams(ns);
+                let apFrom = (ap.from === null) ? 4 : ap.from;
+                let apModel = (ap.model === null) ? 2 : ap.model;
+                let apTarget = (ap.target === null) ? moneyThresh : ap.target;
+                await ns.run(commonUtil.getAttackScript(ns), 1, apFrom, apModel, apTarget);
             }
 
             if (Object.entries(targetUtil.getUnbreachedHosts(ns)).length === 0) {
@@ -92,7 +103,7 @@ async function rep(ns) {
     while (true) {
         let entityRep = getRep[entityType](entity) + ns.getPlayer().workRepGained;
         if (entityRep < 0) {
-            ns.tprintf("ERROR: Invalid entity: " + entity);
+            ns.tprintf(`ERROR: Invalid entity: ${entity}`);
             ns.exit();
         }
 
@@ -119,7 +130,7 @@ async function money(ns) {
         : "";
 
     if (!isUtil.numberValid(ns, targetMoney)) {
-        ns.tprintf("ERROR: Invalid target money entry: " + targetMoney);
+        ns.tprintf(`ERROR: Invalid target money entry: ${targetMoney}`);
         ns.exit();
     }
 
@@ -127,12 +138,54 @@ async function money(ns) {
         let playerMoney = ns.getServerMoneyAvailable("home");
         ns.print(`playerMoney: ${playerMoney}, targetMoney: ${targetMoney}`);
         if (playerMoney >= targetMoney) {
-            commonUtil.showNotice(ns, "Target money reached: " + commonUtil.formatMoney(ns, targetMoney) + note);
+            commonUtil.showNotice(ns, `Target money reached: ${commonUtil.formatMoney(ns, targetMoney)}${note}`);
             commonUtil.play(ns, "whistle");
             ns.exit();
         }
 
         ns.print("targetMoney not reached... sleeping");
+        await ns.sleep(pollDelay);
+    }
+}
+
+async function stat(ns) {
+    let whichStat = ns.args[1].toLowerCase();
+    const targetSkill = (isUtil.numberValid(ns, ns.args[2]))
+        ? ns.args[2]
+        : 0;
+
+    if (whichStat.includes("hack")) {
+        whichStat = "hacking";
+    } else if (whichStat.includes("str")) {
+        whichStat = "strength";
+    } else if (whichStat.includes("def")) {
+        whichStat = "defense";
+    } else if (whichStat.includes("dex")) {
+        whichStat = "dexterity";
+    } else if (whichStat.includes("agi")) {
+        whichStat = "agility";
+    } else if (whichStat.includes("cha")) {
+        whichStat = "charisma";
+    } else {
+        ns.tprintf(`ERROR: Invalid stat: ${whichStat}`);
+        ns.exit();
+    }
+
+    while (true) {
+        let currSkill = ns.getPlayer().skills[whichStat];
+
+        ns.print(`stat: ${whichStat}, targetSkill: ${targetSkill}`);
+        if (currSkill >= targetSkill) {
+            commonUtil.showNotice(ns, `${commonUtil.upperFirstLetter(ns, whichStat)} target skill reached: ${targetSkill}`);
+
+            // comment out the line below if it yields an error
+            // it loads singularity.connect which costs 32GB
+            commonUtil.play(ns, "drip");
+            await ns.sleep(1000);
+            break;
+        }
+
+        ns.print("targetSkill not reached... sleeping");
         await ns.sleep(pollDelay);
     }
 }

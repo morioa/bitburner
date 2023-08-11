@@ -1,49 +1,70 @@
 /** @param {NS} ns **/
 import * as commonUtil from "./util.common.js";
-import * as breachUtil from "./util.breach.js";
-import * as targetUtil from "./util.target.js";
+//import * as breachUtil from "./util.breach.js";
+//import * as targetUtil from "./util.target.js";
 import * as tableUtil from "./util.table.js";
-import * as isUtil from "./util.is.js";
-import {getRandomIntInclusive} from "./util.common.js";
+import {getWatcherScript} from "./util.common";
+//import * as isUtil from "./util.is.js";
+//import {getRandomIntInclusive} from "./util.common.js";
 
 export async function main(ns) {
+
+    const params = commonUtil.getLastAttackParams(ns);
+    ns.tprint(params);
+
+    /* trying to get unclickable achievement
+    let win = eval("window"),
+        doc = eval("document"),
+        unc = doc.getElementById("unclickable");
+
+    let d = unc.style.display;
+    let v = unc.style.visibility;
+
+    unc.style.display = "none";
+    unc.style.visibility = "hidden";
+
+    unc.click();
+    let w = win.getComputedStyle(unc);
+
+    ns.tprint(w.display);
+    ns.tprint(w.visibility);
+    */
     /*
-    let data = [70,100,5,198,50,29,180,162,39,187,145,48,51,35];
-    let currAction = "buy";
-    let totalProfit = 0;
-    let bsChain = [];
+    let homeRamMax = ns.getServerMaxRam("home");
+    let homeRamReserved = Math.ceil(ns.getScriptRam(getWatcherScript(ns)) * 3) + 8;
+    ns.tprint(homeRamMax);
+    ns.tprint(homeRamReserved);
+    */
 
-    let i = 0, j = 0;
-    while (i < data.length) {
-        switch (currAction) {
-            case "buy":
-                i = findNextSmallestKey(ns, data, i);
-                j = findNextBiggestKey(ns, data, i);
-                if (i === j) {
-                    // there is no more to buy/sell
-                    i = data.length;
-                    break;
-                }
-                totalProfit -= data[i];
-                bsChain.push("buy: " + data[i] + "; calc: " + totalProfit);
-                currAction = "sell";
-                break;
+    /*
+    const script = "test.js";
+    const host = "home";
+    const iLimit = 5;
+    let i = ns.args[0];
 
-            case "sell":
-            default:
-                i = findNextBiggestKey(ns, data, i);
-                totalProfit += data[i];
-                bsChain.push("sell: " + data[i] + "; calc: " + totalProfit);
-                currAction = "buy";
+    if (i == undefined) {
+        // initialize
+        ns.print("Initializing instances");
+        for (i = 1; i <= iLimit; i++) {
+            if (!ns.isRunning(script, host, i)) {
+                ns.print(`Starting instance: ${i}`);
+                ns.exec(script, host, 1, i);
+            }
         }
-        i++;
-    }
-    totalProfit = (totalProfit > 0)
-        ? totalProfit
-        : 0;
 
-    ns.tprint(bsChain);
-    ns.tprint("Total profit: " + totalProfit);
+        if (i === iLimit) {
+            ns.pprint(`Instance limit reached: ${iLimit}`);
+        }
+
+        // verify running
+        ns.print("Verifying instances");
+        for (i = 1; i <= iLimit; i++) {
+            ns.print(`Instance ${i} is running: `, ns.isRunning(script, host, i));
+        }
+    } else {
+        ns.tprint("Sleeping");
+        await ns.sleep(10000);
+    }
     */
 
     /*
@@ -106,8 +127,10 @@ export async function main(ns) {
         { name: "Pratomagno", height: 1592, place: "Parco Foreste Casentinesi" },
         { name: "Monte Amiata", height: 1738, place: "Siena" }
     ];
-    tableUtil.renderTable(ns, "mountains", mountains, 1);
+    tableUtil.renderTable(ns, "MOUNTAINS", mountains);
+    */
 
+/*
     await ns.sleep(100);
 
     let doc = eval("document");
@@ -130,7 +153,7 @@ export async function main(ns) {
     ns.tprint(term.tagName);
     */
 
-    ns.tprint(ns);
+    //ns.tprint(targetUtil.getUnbreachedHosts(ns));
 
     //ns.tprint(commonUtil.formatNumber(ns, ns.args[0], ns.args[1], ns.args[2]));
 
@@ -207,24 +230,6 @@ function generateTable(doc, table, data) {
             cell.appendChild(text);
         }
     }
-}
-
-function findNextSmallestKey(ns, data, startFrom) {
-    for (let i = startFrom; i < data.length - 1; i++) {
-        if (data[i] < data[i + 1]) {
-            return i;
-        }
-    }
-    return startFrom;
-}
-
-function findNextBiggestKey(ns, data, startFrom) {
-    for (let i = startFrom; i < data.length - 1; i++) {
-        if (data[i] > data[i + 1]) {
-            return i;
-        }
-    }
-    return startFrom;
 }
 
 function getCompanyRep(ns) {

@@ -20,6 +20,10 @@ export function getAttackScript(ns) {
     return "attack.js";
 }
 
+export function getAttackLogFile(ns) {
+    return "attack.txt";
+}
+
 export function getHackScript(ns) {
     return "_chesterTheMolester.js";
 }
@@ -87,7 +91,7 @@ export function listHostsOther(ns) {
 }
 
 export function findProcessByName(ns, name, host, kill = false) {
-    let allProcesses = ns.ps(host);
+    const allProcesses = ns.ps(host);
     let processes = [];
     for (let process of allProcesses) {
         if (process.filename === name) {
@@ -173,16 +177,13 @@ export function formatNumberArrayOfObjectsColumns(ns, arr, cols, formatTo = "sho
 }
 
 export function getHomeRamReserved(ns) {
-    let homeRamMax = ns.getServerMaxRam("home");
-    let homeRamReserved = 0;
-    if (homeRamMax >= 8192) {
-        homeRamReserved = Math.ceil(ns.getScriptRam(getWatcherScript(ns)) * 3) + 8;
-    } else if (homeRamMax > 1024) {
-        homeRamReserved = 64;
-    } else if (homeRamMax > 32) {
-        homeRamReserved = 8;
-    }
-    return homeRamReserved;
+    const watcherRamCost = ns.getScriptRam(getWatcherScript(ns));
+    const purchaseServersRamCost = ns.getScriptRam(getServerPurchaseScript(ns));
+    const findTargetsRamCost = ns.getScriptRam("findTargets.js");
+
+    return Math.ceil(
+        (watcherRamCost * 3) + (purchaseServersRamCost) + (findTargetsRamCost * 3) + 8
+    );
 }
 
 export function upperFirstLetter(ns, str) {
@@ -202,8 +203,8 @@ export function working(ns, elemId = null) {
         return;
     }
     if (elemId === null) {
-        elemId = "custom_temp_elem_" + getRandomIntInclusive(ns, 0,9999);
-        term.insertAdjacentHTML("beforeend", "<p id='" + elemId + "' class='jss16653 MuiTypography-root MuiTypography-body1 css-cxl1tz' style='color: #999999;'>working...</p>");
+        elemId = `custom_temp_elem_${getRandomIntInclusive(ns, 0,9999)}`;
+        term.insertAdjacentHTML("beforeend", `<p id="${elemId}" class="jss16653 MuiTypography-root MuiTypography-body1 css-cxl1tz" style="color: #999999;">working...</p>`);
         doc.getElementById(elemId).scrollIntoView();
         return elemId;
     } else {
@@ -222,16 +223,27 @@ export function play(ns, sound) {
 }
 
 export function showNotice(ns, message, title = "notice") {
-    let lineChar = "=";
-    let titleLine = "==[ " + title.toUpperCase() + " ]==";
-    let messageLine = ">>>  " + message + "  <<<";
-    let lineLength = (titleLine.length > messageLine.length)
+    const lineChar = "=";
+    const titleLine = `==[ ${title.toUpperCase()} ]==`;
+    const messageLine = `>>>  ${message}  <<<`;
+    const lineLength = (titleLine.length > messageLine.length)
         ? titleLine.length
         : messageLine.length;
-
-    let output = "WARN:\n\n" +
-        titleLine + lineChar.repeat(lineLength - titleLine.length) + "\n" +
-        messageLine + "\n" +
-        lineChar.repeat(lineLength) + "\n\n";
+    const output = `WARN:
+    
+${titleLine}${lineChar.repeat(lineLength - titleLine.length)}
+${messageLine}
+${lineChar.repeat(lineLength)}
+    `;
     ns.tprintf(output);
+}
+
+export function getLastAttackParams(ns) {
+    const params = (ns.fileExists(getAttackLogFile(ns)))
+        ? ns.read(getAttackLogFile(ns))
+        : '';
+
+    return (params === "")
+        ? {"from":null, "model":null, "target":null}
+        : JSON.parse(params);
 }
