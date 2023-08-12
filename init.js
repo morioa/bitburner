@@ -7,6 +7,10 @@ export async function main(ns) {
         ? ns.args[0]
         : 1;
 
+    if (ns.fileExists(commonUtil.getAttackLogFile(ns))) {
+        ns.rm(commonUtil.getAttackLogFile(ns));
+    }
+
     // start the watcher
     ns.run(commonUtil.getWatcherScript(ns), 1, "new", 1, moneyThresh);
     // This tells the watcher to auto-attack when ----^
