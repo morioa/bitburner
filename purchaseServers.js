@@ -1,4 +1,3 @@
-/** @param {NS} ns */
 import * as commonUtil from "./util.common.js";
 import * as targetUtil from "./util.target.js";
 import * as tableUtil from "./util.table.js";
@@ -7,17 +6,18 @@ import * as isUtil from "./util.is.js";
 const defaultRam = 2048;
 const useAttackRamThreshold = 32;
 
+/** @param {NS} ns */
 export async function main(ns) {
     ns.disableLog("ALL");
     ns.enableLog("purchaseServer");
 
-    const attackScript = commonUtil.getAttackScript(ns);
-    const hackScript = commonUtil.getHackScript(ns);
-    const hackScriptRamCost = commonUtil.getHackScriptRamCost(ns);
+    const attackScript = commonUtil.getAttackScript(ns),
+        hackScript = commonUtil.getHackScript(ns),
+        hackScriptRamCost = commonUtil.getHackScriptRamCost(ns);
 
-    let target = targetUtil.getLastHackableHost(ns).host;
-    let ram = defaultRam;
-    let repurchase;
+    let target = targetUtil.getLastHackableHost(ns).host,
+        ram = defaultRam,
+        upgrade;
 
     if (ns.args[0] != undefined) {
         switch (ns.args[0]) {
@@ -41,7 +41,7 @@ export async function main(ns) {
         ns.exit();
     }
 
-    repurchase = (isUtil.numberEqual(ns, ns.args[1], 1));
+    upgrade = (isUtil.numberEqual(ns, ns.args[1], 1));
     let owned = commonUtil.listHostsOwned(ns);
     ns.print(owned);
 
@@ -57,10 +57,10 @@ export async function main(ns) {
         ns.print(`Handling server '${hostname}'`);
         ns.print(`Server '${hostname}' ${(serverExists) ? 'exists' : 'does not exist'}`);
 
-        if (serverExists && (!repurchase || ns.getServerMaxRam(hostname) >= ram)) {
-            // Skip if not repurchase and the server exists, or the server has equal
-            // or more RAM than the repurchase order
-            let msg = (!repurchase)
+        if (serverExists && (!upgrade || ns.getServerMaxRam(hostname) >= ram)) {
+            // Skip if not upgrade and the server exists, or the server has equal
+            // or more RAM than the upgrade order
+            let msg = (!upgrade)
                 ? `Server '${hostname}' already exists -- SKIPPING`
                 : `Server '${hostname}' already has ${ram} RAM -- SKIPPING`;
             ns.tprint(msg);
@@ -70,7 +70,7 @@ export async function main(ns) {
 
         let moneyAvail = ns.getServerMoneyAvailable("home");
         let moneyAvailVerbose = commonUtil.formatNumber(ns, moneyAvail, "shorthand", true);
-        let serverCost = (!repurchase)
+        let serverCost = (!upgrade)
             ? ns.getPurchasedServerCost(ram)
             : ns.getPurchasedServerUpgradeCost(hostname, ram);
         let serverCostVerbose = commonUtil.formatNumber(ns, serverCost, "shorthand", true);
@@ -82,7 +82,7 @@ export async function main(ns) {
             //  2. Copy our hacking script onto the newly-purchased server
             //  3. Run our hacking script on the newly-purchased server with n threads
             //  4. Increment our iterator to indicate that we've bought a new server
-            if (repurchase && serverExists) {
+            if (upgrade && serverExists) {
                 ns.killall(hostname);
                 //ns.deleteServer(hostname);
             }
@@ -125,12 +125,13 @@ export async function main(ns) {
     }
 }
 
+/** @param {NS} ns */
 function showServerPurchaseTable(ns) {
+    let maxServers = ns.getPurchasedServerLimit();
     let servers = ns.getPurchasedServers();
-    let server = commonUtil.getHostPurchasedPrefix(ns) + 24;
+    let server = commonUtil.getHostPurchasedPrefix(ns) + (maxServers - 1);
     let serverExists = (servers.includes(server));
     let maxRam = ns.getPurchasedServerMaxRam();
-    let maxServers = ns.getPurchasedServerLimit();
     let costs = [];
     for (let i = 1; Math.pow(2, i) <= maxRam; i++) {
         let ram = Math.pow(2, i);
@@ -150,6 +151,12 @@ function showServerPurchaseTable(ns) {
     ns.exit();
 }
 
+export function autocomplete(data, args) {
+
+    return ["help","cost",524288,1048576];
+}
+
+/** @param {NS} ns */
 function showHelp(ns) {
     let output = `
 This script will allow you to display a cost breakdown of servers by
@@ -170,8 +177,8 @@ arg1     [optional] Can be the strings 'help' (to show this help) or
          passed.
  
 arg2     [optional] [Boolean] Can be '1' or 'true' to flag for the
-         repurchase all servers to have the amount of RAM passed
-         for arg1. The repurchase action will only be acted upon for
+         upgrade all servers to have the amount of RAM passed
+         for arg1. The upgrade action will only be acted upon for
          servers that have less RAM than what is passed for arg1.
  
 Examples:
@@ -185,7 +192,7 @@ Examples:
     To purchase any remaining servers with 1024 GB of RAM:
          run ${commonUtil.getServerPurchaseScript(ns)} 1024
  
-    To repurchase all servers with less than 4096 GB of RAM:
+    To upgrade all servers with less than 4096 GB of RAM:
          run ${commonUtil.getServerPurchaseScript(ns)} 4096 1
     `;
     ns.tprintf(output);

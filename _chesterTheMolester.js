@@ -1,8 +1,8 @@
 /** @param {NS} ns */
 export async function main(ns) {
-    let target = ns.args[0];
-    let moneyThresh = ns.getServerMaxMoney(target) * 0.75;
-    let securityThresh = ns.getServerMinSecurityLevel(target) + 5;
+    let target = ns.args[0],
+        moneyThresh = ns.getServerMaxMoney(target) * 0.75,
+        securityThresh = ns.getServerMinSecurityLevel(target) + 5;
 
     while (true) {
         if (ns.getServerSecurityLevel(target) > securityThresh) {

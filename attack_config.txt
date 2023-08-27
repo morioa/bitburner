@@ -1,0 +1,1 @@
+{"moneyThreshMultiplier":0.75,"securityThreshOffset":5}

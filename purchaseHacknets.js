@@ -15,7 +15,7 @@ export async function main(ns) {
     while (ns.hacknet.numNodes() < nodesLimit) {
         let cost = ns.hacknet.getPurchaseNodeCost();
         while (myMoney(ns) < cost) {
-            ns.print("Need " + commonUtil.formatMoney(ns, cost) + " to buy a new node (" + commonUtil.formatMoney(ns, myMoney(ns)) + ")");
+            ns.print(`Need ${commonUtil.formatMoney(ns, cost)} to buy a new node (${commonUtil.formatMoney(ns, myMoney(ns))})`);
             await ns.sleep(5000);
         }
         ns.hacknet.purchaseNode();
@@ -23,44 +23,44 @@ export async function main(ns) {
 
     let numNodes = ns.hacknet.numNodes();
 
-    ns.tprintf("Hacknet nodes count: " + numNodes);
+    ns.tprintf(`Hacknet nodes count: ${numNodes}`);
 
-    ns.tprintf("Upgrading nodes [LEVEL => " + (nodeUpgradeLevelLimit + 1) + "]");
+    ns.tprintf(`Upgrading nodes [LEVEL => ${(nodeUpgradeLevelLimit + 1)}]`);
     for (let i = 0; i < numNodes; i++) {
         let cost = ns.hacknet.getLevelUpgradeCost(i, nodeUpgradeLevelLimit);
         if (!isFinite(cost)) {
             continue;
         }
         while (myMoney(ns) < cost) {
-            ns.print("Need " + commonUtil.formatMoney(ns, cost) + " to fully upgrade node level (" + commonUtil.formatMoney(ns, myMoney(ns)) + ")");
+            ns.print(`Need ${commonUtil.formatMoney(ns, cost)} to fully upgrade node level (${commonUtil.formatMoney(ns, myMoney(ns))})`);
             await ns.sleep(5000);
         }
         ns.hacknet.upgradeLevel(i, nodeUpgradeLevelLimit);
     }
     ns.tprintf("INFO: All nodes fully upgraded to max level");
 
-    ns.tprintf("Upgrading nodes [RAM => " + Math.pow(2, nodeUpgradeRamLimit) + "]");
+    ns.tprintf(`Upgrading nodes [RAM => ${Math.pow(2, nodeUpgradeRamLimit)}]`);
     for (let i = 0; i < numNodes; i++) {
         let cost = ns.hacknet.getRamUpgradeCost(i, nodeUpgradeRamLimit);
         if (!isFinite(cost)) {
             continue;
         }
         while (myMoney(ns) < cost) {
-            ns.print("Need " + commonUtil.formatMoney(ns, cost) + " to fully upgrade node RAM (" + commonUtil.formatMoney(ns, myMoney(ns)) + ")");
+            ns.print(`Need ${commonUtil.formatMoney(ns, cost)} to fully upgrade node RAM (${commonUtil.formatMoney(ns, myMoney(ns))})`);
             await ns.sleep(5000);
         }
         ns.hacknet.upgradeRam(i, nodeUpgradeRamLimit);
     }
     ns.tprintf("INFO: All nodes fully upgraded to max RAM");
 
-    ns.tprintf("Upgrading nodes [CORES => " + (nodeUpgradeCoreLimit + 1) + "]");
+    ns.tprintf(`Upgrading nodes [CORES => ${(nodeUpgradeCoreLimit + 1)}]`);
     for (let i = 0; i < numNodes; i++) {
         let cost = ns.hacknet.getCoreUpgradeCost(i, nodeUpgradeCoreLimit);
         if (!isFinite(cost)) {
             continue;
         }
         while (myMoney(ns) < cost) {
-            ns.print("Need " + commonUtil.formatMoney(ns, cost) + " to fully upgrade node cores (" + commonUtil.formatMoney(ns, myMoney(ns)) + ")");
+            ns.print(`Need ${commonUtil.formatMoney(ns, cost)} to fully upgrade node cores (${commonUtil.formatMoney(ns, myMoney(ns))})`);
             await ns.sleep(5000);
         }
         ns.hacknet.upgradeCore(i, nodeUpgradeCoreLimit);

@@ -14,8 +14,8 @@ import * as isUtil from "./util.is.js";
 export async function main(ns) {
     let input;
 
-    //input = [33,91,155,154,133,41,23,141,83,108,168,123,115,72];
-    //await buySell(ns, input);
+    input = [26,184,36,20,113,19,128,27,51,20,87,134,193,5,135,40,68,51,148,118,28,77,175,123,97,30,74,26,116,163,71,195,98,174,40,112,145,90,1,186,47,76,92];
+    await buySell(ns, input);
 
     //input = ["TRASH FLASH PRINT QUEUE LOGIN", 8];
     //await caesarCipher(ns, input);
@@ -26,9 +26,12 @@ export async function main(ns) {
     //input = "AAAAARRRRRRRRRlllllYYYXjjjjjjjJJJQ000000WWWoGWssssAaa221n666ttttttt";
     //await rleCompression(ns, input);
 
-    input = "6ERLRCn853k7M992te559AZxnRnhb508Rjuhhhhe65185941bwB";
-    input = "5aaabb450723abb";
-    await lzDecompress(ns, input);
+    //input = "6ERLRCn853k7M992te559AZxnRnhb508Rjuhhhhe65185941bwB";
+    //input = "5aaabb450723abb";
+    //await lzDecompress(ns, input);
+
+    //input = ["CLOUDSHELLQUEUEPOPUPENTER", "BOOKMARK"];
+    //await vCipherDecrypt(ns, input);
 }
 
 // solver functions
@@ -47,7 +50,9 @@ export async function buySell(ns, input) {
                 i = findNextSmallestKey(ns, input, i);
                 j = findNextBiggestKey(ns, input, i);
                 if (i === j) {
+
                     // there is no more to buy/sell
+                    ns.tprint(`i: ${i}, j: ${j}, valAt: ${input[i]}`);
                     i = input.length;
                     break;
                 }
@@ -194,11 +199,44 @@ export async function lzDecompress(ns, input) {
     }
 }
 
+export async function vCipherDecrypt(ns, input) {
+    let pt = input[0],
+        kwr = input[1],
+        kw = input[1],
+        ab = "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        res = "";
+
+    while (kw.length < pt.length) {
+        kw += kwr;
+    }
+
+    kw = kw.substring(0, pt.length);
+
+    ns.tprint(`Plaintext: ${pt}`);
+    ns.tprint(`  Keyword: ${kw}`);
+
+    for (let i = 0; i < pt.length; i++) {
+        let ptChar = pt.charAt(i),
+            kwChar = kw.charAt(i),
+            ptLoc = ab.indexOf(ptChar),
+            kwLoc = ab.indexOf(kwChar),
+            resLoc = ptLoc + kwLoc;
+
+        if (resLoc > ab.length) {
+            resLoc -= ab.length;
+        }
+
+        res += ab.charAt(resLoc);
+    }
+
+    ns.tprint(`   Result: ${res}`);
+}
+
 // support functions
 
 function findNextSmallestKey(ns, data, startFrom) {
-    for (let i = startFrom; i < data.length - 1; i++) {
-        if (data[i] < data[i + 1]) {
+    for (let i = startFrom; i <= data.length - 1; i++) {
+        if (data[i] < data[i + 1] || i === data.length - 1) {
             return i;
         }
     }
@@ -206,8 +244,8 @@ function findNextSmallestKey(ns, data, startFrom) {
 }
 
 function findNextBiggestKey(ns, data, startFrom) {
-    for (let i = startFrom; i < data.length - 1; i++) {
-        if (data[i] > data[i + 1]) {
+    for (let i = startFrom; i <= data.length - 1; i++) {
+        if (data[i] > data[i + 1] || i === data.length - 1) {
             return i;
         }
     }

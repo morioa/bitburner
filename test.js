@@ -9,10 +9,46 @@ import {getWatcherScript} from "./util.common";
 
 export async function main(ns) {
 
+    ns.tprint(commonUtil.formatTime(ns, 248542));
+
+    /*
+    const server = ns.getServer("CSEC");
+    ns.tprint(server.backdoorInstalled);
+    */
+
+    /*
+    const name = "NWO",
+        company = ns.getCompany(name),
+        faction = ns.getFaction(name);
+
+    ns.tprint(name);
+    ns.tprint(company);
+    ns.tprint(faction);
+    */
+
+    /*
+    commonUtil.working(ns);
+    await ns.sleep(5000);
+
+    // working element cleanup
+    for (let i = 0; i <= 9999; i++) {
+        let elemId = `custom_temp_elem_${i}`;
+        if (undefined != document.getElementById(elemId)) {
+            document.getElementById(elemId).remove();
+            return;
+        }
+    }
+    */
+
+    //ns.tprint(await ns.singularity.getFactionRep(ns.getPlayer().factions[5]));
+
+    /*
     const params = commonUtil.getLastAttackParams(ns);
     ns.tprint(params);
+    */
 
-    /* trying to get unclickable achievement
+    /*
+    // trying to get unclickable achievement
     let win = eval("window"),
         doc = eval("document"),
         unc = doc.getElementById("unclickable");
@@ -22,13 +58,22 @@ export async function main(ns) {
 
     unc.style.display = "none";
     unc.style.visibility = "hidden";
+    unc.style.backgroundColor = "rgb(255,0,0)";
+    unc.style.color = "rgb(0,0,0)";
+    unc.style.zIndex = "auto";
 
     unc.click();
     let w = win.getComputedStyle(unc);
 
     ns.tprint(w.display);
     ns.tprint(w.visibility);
+    ns.tprint(unc.style.backgroundColor);
+    ns.tprint(`${w.x},${w.y}`);
+    ns.tprint(w.backgroundColor);
+    ns.tprint(w.color);
+    ns.tprint(`${w.width} x ${w.height}`);
     */
+
     /*
     let homeRamMax = ns.getServerMaxRam("home");
     let homeRamReserved = Math.ceil(ns.getScriptRam(getWatcherScript(ns)) * 3) + 8;

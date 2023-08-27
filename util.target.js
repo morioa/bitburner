@@ -1,34 +1,35 @@
 /** @param {NS} ns */
-import * as commonUtil from "./util.common.js";
-import * as breachUtil from "./util.breach.js";
+import {listHostsOther} from "./util.common.js";
+import {isHackable, isBreachable} from "./util.breach.js";
 
 export function list(ns, moneyThresh = 0, hackableOnly = 0) {
-    let hosts = commonUtil.listHostsOther(ns);
-    let hostsDetails = [];
+    let hosts = listHostsOther(ns),
+        hostsDetails = [];
 
     for (let host of hosts) {
-        let hostDetails = {};
-        hostDetails["host"] = host;
-        hostDetails["moneyMax"] = Math.floor(ns.getServerMaxMoney(host));
-        //hostDetails["moneyMaxFormatted"] = commonUtil.formatMoney(ns, hostDetails["moneyMax"]);
-        hostDetails["moneyAvail"] = Math.floor(ns.getServerMoneyAvailable(host));
-        //hostDetails["moneyAvailFormatted"] = commonUtil.formatMoney(ns, hostDetails["moneyAvail");
-        hostDetails["securityLevel"] = Math.floor(ns.getServerSecurityLevel(host));
-        hostDetails["securityLevelMin"] = ns.getServerMinSecurityLevel(host);
-        hostDetails["hasRootAccess"] = ns.hasRootAccess(host);
-        hostDetails["maxRam"] = ns.getServerMaxRam(host);
-        hostDetails["hackLevelReq"] = ns.getServerRequiredHackingLevel(host);
-        hostDetails["portsOpenReq"] = ns.getServerNumPortsRequired(host);
+        let server = ns.getServer(host),
+            hostDetails = {
+                "host":host,
+                "moneyMax":Math.floor(ns.getServerMaxMoney(host)),
+                "moneyAvail":Math.floor(ns.getServerMoneyAvailable(host)),
+                "securityLevel":Math.floor(ns.getServerSecurityLevel(host)),
+                "securityLevelMin":ns.getServerMinSecurityLevel(host),
+                "hasRootAccess":server.hasAdminRights,
+                "hasBackdoor":server.backdoorInstalled,
+                "maxRam":server.maxRam,
+                "hackLevelReq":server.requiredHackingSkill,
+                "portsOpenReq":server.numOpenPortsRequired
+            };
 
         if (hostDetails["moneyMax"] < moneyThresh) {
             continue;
         }
 
-        if (hackableOnly && breachUtil.isHackable(ns, host) === false) {
+        if (hackableOnly && isHackable(ns, host) === false) {
             continue;
         }
 
-        if (hackableOnly && breachUtil.isBreachable(ns, host) === false) {
+        if (hackableOnly && isBreachable(ns, host) === false) {
             continue;
         }
 

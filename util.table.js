@@ -1,28 +1,33 @@
 import {getRandomIntInclusive} from "./util.common.js";
 
-/** @param {NS} ns **/
+const paddingSize = 1,
+    paddingChar = " ",
+    intersectChar = "+",
+    horizLineChar = "-",
+    vertLineChar = "|",
+    tableColor = "#FFFF00";
 
-const paddingSize = 1;
-const paddingChar = " ";
-const intersectChar = "+";
-const horizLineChar = "-";
-const vertLineChar = "|";
-const tableColor = "#FFFF00";
-
-export function renderTable(ns, title, data, asTable = false) {
+/**
+ * Render a table in HTML format or fixed-width text
+ * @param ns
+ * @param title
+ * @param data
+ * @param useDom
+ */
+export function renderTable(ns, title, data, useDom = false) {
     if (data.length === 0) {
         ns.tprintf("WARNING: No data to render");
         ns.exit();
     }
 
     let doc = eval("document"),
-        term = doc.getElementById("terminal");
+        term = doc.getElementById("terminal") ?? null;
 
-    if (term == undefined) {
-        asTable = false;
+    if (term === null) {
+        useDom = false;
     }
 
-    if (asTable) {
+    if (useDom) {
         let li = doc.createElement("li"),
             table = doc.createElement("table"),
             caption = table.createCaption(),
@@ -61,14 +66,14 @@ export function renderTable(ns, title, data, asTable = false) {
         let dataObj = data[idx];
         for (let key in dataObj) {
             let length = dataObj[key].toString().length;
-            if (maxLengths[key] == undefined || length > maxLengths[key]) {
+            if (maxLengths[key] === undefined || length > maxLengths[key]) {
                 maxLengths[key] = length;
             }
 
             if (parseInt(idx) === 0) {
                 columns[key] = key;
                 length = key.toString().length;
-                if (maxLengths[key] == undefined || length > maxLengths[key]) {
+                if (maxLengths[key] === undefined || length > maxLengths[key]) {
                     maxLengths[key] = length;
                 }
             }
@@ -101,11 +106,10 @@ function drawTableLine(ns, maxLengths, data, isHeader = false) {
     output += vertLineChar;
 
     for (let col in data) {
-        let value = data[col].toString();
-        let extraPadding = maxLengths[col] - value.length;
-
-        let leftPadding = paddingSize;
-        let rightPadding = paddingSize;
+        let value = data[col].toString(),
+            extraPadding = maxLengths[col] - value.length,
+            leftPadding = paddingSize,
+            rightPadding = paddingSize;
 
         if (value.indexOf("$") >= 0 ||
             isNaN(value) === false ||
@@ -142,16 +146,16 @@ function drawTableBorder(ns, maxLengths) {
 }
 
 function generateTableHead(ns, doc, table, data) {
-    let thead = table.createTHead();
-    let row = thead.insertRow();
+    let thead = table.createTHead(),
+        row = thead.insertRow();
     for (let key of data) {
-        let th = doc.createElement("th");
+        let text = doc.createTextNode(key.toUpperCase()),
+            th = doc.createElement("th");
         th.className = "jss16653 MuiTypography-root MuiTypography-body1";
         th.style.border = "1px solid " + tableColor;
         th.style.padding = "1px 6px";
         th.style.color = tableColor;
         th.style.textAlign = "left";
-        let text = doc.createTextNode(key.toUpperCase());
         th.appendChild(text);
         row.appendChild(th);
     }
@@ -161,8 +165,8 @@ function generateTable(ns, doc, table, data) {
     for (let element of data) {
         let row = table.insertRow();
         for (let key in element) {
-            let value = element[key].toString();
-            let cell = row.insertCell();
+            let value = element[key].toString(),
+                cell = row.insertCell();
             cell.className = "jss16653 MuiTypography-root MuiTypography-body1";
             cell.style.borderWidth = "0 1px";
             cell.style.borderStyle = "solid";

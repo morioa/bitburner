@@ -9,36 +9,33 @@ import * as isUtil from "./util.is.js";
 // threshold to a lower value and/or bump up the delay slightly. This slows
 // down the attack, so it will take longer for all attacks to start on all
 // usable hosts.
-const attackThreshold = 30; // Number of targets before a delay is imposed
-const attackThresholdDelay = 100; // Delay between each host loop
+const attackThreshold = 30,     // Number of targets before a delay is imposed
+    attackThresholdDelay = 100, // Delay between each host loop
+    fromOpts = {0:"home", 1:"owned", 2:"purchased", 3:"other", 4:"all"},
+    fromDefault = 4,
+    modelOpts = {0:"last", 1:"targeted", 2:"distributed", 3:"distributed/weighted"},
+    modelDefault = 2,
+    targetMoneyThreshDefault = 0,
+    algos = {
+        consolidated: [
+            {file: "_chesterTheMolester.js", weight: 1.0}
+        ],
+        loop: [
+            {file: "_grow.js", weight: 0.67},
+            {file: "_hack.js", weight: 0.08},
+            {file: "_weaken.js", weight: 0.25}
+        ]
+    };
 
-const fromOpts = {0:"home", 1:"owned", 2:"purchased", 3:"other", 4:"all"};
-const fromDefault = 4;
-
-const modelOpts = {0:"last", 1:"targeted", 2:"distributed", 3:"distributed/weighted"};
-const modelDefault = 2;
-
-const targetMoneyThreshDefault = 0;
-
-const algos = {
-    consolidated: [
-        {file: "_chesterTheMolester.js", weight: 1.0}
-    ],
-    loop: [
-        {file: "_grow.js", weight: 0.77},
-        {file: "_hack.js", weight: 0.08},
-        {file: "_weaken.js", weight: 0.15}
-    ]
-};
-let algoType = "loop";
-let algo = algos[algoType];
+let algoType = "loop",
+    algo = algos[algoType];
 
 export async function main(ns) {
     ns.disableLog("ALL");
-    ns.enableLog("exec");
+    //ns.enableLog("exec");
 
     let attackParams = getAttackParams(ns);
-    ns.write(commonUtil.getAttackLogFile(ns), JSON.stringify(attackParams), "w");
+    await ns.write(commonUtil.getAttackLogFile(ns), JSON.stringify(attackParams), "w");
     await ns.sleep(100);
     await attackDistributedAll(ns, attackParams['target']);
     await ns.sleep(1);
@@ -106,8 +103,8 @@ function getAttackParams(ns) {
 }
 
 function getUsableHosts(ns, otherOnly = false) {
-    let hostsOwned = commonUtil.listHostsOwned(ns);
-    let hostsOther = targetUtil.list(ns, 0, 1).map(x => x.host);
+    let hostsOwned = commonUtil.listHostsOwned(ns),
+        hostsOther = targetUtil.list(ns, 0, 1).map(x => x.host);
 
     if (otherOnly) {
         return hostsOther;
@@ -117,11 +114,11 @@ function getUsableHosts(ns, otherOnly = false) {
 }
 
 async function attackDistributedAll(ns, moneyThresh) {
-    const hosts = getUsableHosts(ns);
-    const hostsOther = getUsableHosts(ns, true);
-    const allTargets = targetUtil.list(ns, moneyThresh, 1);
-    let hostsUsedCount = 0;
-    let targetsAttacked = [];
+    const hosts = getUsableHosts(ns),
+        hostsOther = getUsableHosts(ns, true),
+        allTargets = targetUtil.list(ns, moneyThresh, 1);
+    let hostsUsedCount = 0,
+        targetsAttacked = [];
 
     tableUtil.renderTable(ns, "TARGETS", allTargets, true);
     await ns.sleep(1000);
@@ -149,16 +146,16 @@ async function attackDistributedAll(ns, moneyThresh) {
         // Determine how much RAM is available for use on this host and which algorithm to use
         algo = determineAlgo(ns, host);
         const hostRamReserved = (host === "home")
-            ? commonUtil.getHomeRamReserved(ns)
-            : 0;
-        const hostRamMax = ns.getServerMaxRam(host);
-        let hostRamUsed = ns.getServerUsedRam(host);
-        let hostRamAvail = hostRamMax - hostRamReserved - hostRamUsed;
+                ? commonUtil.getHomeRamReserved(ns)
+                : 0,
+            hostRamMax = ns.getServerMaxRam(host);
+        let hostRamUsed = ns.getServerUsedRam(host),
+            hostRamAvail = hostRamMax - hostRamReserved - hostRamUsed;
         const hostRamMinReq = algo.reduce((acc, curr) => acc + ns.getScriptRam(curr.file), 0)
 
         // Skip this host if the available RAM does not meet the minimum requirement
         if (hostRamMax === 0) {
-            ns.tprint(`Host '${host}' has no RAM and cannot be used as an attacker -- SKIPPING`);
+            ns.print(`Host '${host}' has no RAM and cannot be used as an attacker -- SKIPPING`);
             continue;
         } else if (hostRamAvail < hostRamMinReq) {
             ns.tprint(`Host '${host}' does not have enough RAM -- SKIPPING`);
@@ -174,11 +171,11 @@ Required: ${hostRamMinReq}
         }
 
         // Determine how many max threads this host can handle per target
-        const singleScriptRamCost = algo.reduce((acc, curr) => (acc > ns.getScriptRam(curr.file)) ? acc : ns.getScriptRam(curr.file), 0);
-        const threadsTotal = hostRamAvail / singleScriptRamCost;
-        let threadsPerTarget = Math.floor((threadsTotal) / allTargets.length);
-        let thisHostTargets = allTargets;
-        let threadsPerTargetMinReq = algo.length;
+        const singleScriptRamCost = algo.reduce((acc, curr) => (acc > ns.getScriptRam(curr.file)) ? acc : ns.getScriptRam(curr.file), 0),
+            threadsTotal = hostRamAvail / singleScriptRamCost;
+        let threadsPerTarget = Math.floor((threadsTotal) / allTargets.length),
+            thisHostTargets = allTargets,
+            threadsPerTargetMinReq = algo.length;
 
         // Assign all threads to the last / hardest target if not enough RAM to attack all targets
         if (threadsPerTarget < threadsPerTargetMinReq) {
@@ -209,9 +206,9 @@ Required: ${hostRamMinReq}
                 continue;
             }
 
-            let targetThreadsHolder = threadsPerTarget;
-            let targetThreads = threadsPerTarget;
-            let targetThreadsPctUsed = 0;
+            let targetThreadsHolder = threadsPerTarget,
+                targetThreads = threadsPerTarget,
+                targetThreadsPctUsed = 0;
 
             // If this is the last target and there are extra threads remaining, add them to the attack pool
             //ns.print(`${i} : ${Object.entries(thisHostTargets).length - 1}`);
@@ -249,11 +246,11 @@ Required: ${hostRamMinReq}
                     }
 
                     // ATTACK!
-                    ns.exec(script.file, host, fileThreads, target.host);
+                    await ns.exec(script.file, host, fileThreads, target.host);
                     if (!targetsAttacked.includes(target.host)) {
                         targetsAttacked.push(target.host);
                     }
-                    //ns.print("Host '" + host + "' is attacking target '" + target.host + "' with " + fileThreads + " threads");
+                    //ns.print(`Host '${host}' is attacking target '${target.host}' with ${script.file} using ${fileThreads} threads`);
                     commonUtil.findProcessByName(ns, script.file, host);
                     targetThreads -= fileThreads;
                     targetThreadsPctUsed += fileThreads / targetThreadsHolder;

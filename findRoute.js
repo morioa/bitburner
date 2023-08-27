@@ -10,6 +10,6 @@ export async function main(ns) {
     }
     let routes = commonUtil.listHostsConnections(ns, host);
 
-    tableUtil.renderTable(ns, "ROUTES", routes, true);
+    await tableUtil.renderTable(ns, "ROUTES", routes, true);
     //ns.tprint(routes);
 }

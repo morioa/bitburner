@@ -69,8 +69,13 @@ export function listHostsConnections(ns, targetHost = null) {
             continue;
         }
 
+        let server = ns.getServer(host);
+        let bd = (server.backdoorInstalled)
+            ? "Yes"
+            : "No";
+
         if (targetHost === null || targetHost === host) {
-            hostsConns.push({host:host, connections:ns.scan(host).filter(h => h.indexOf(getHostPurchasedPrefix(ns)) < 0)});
+            hostsConns.push({host:host, backdoor:bd, connections:ns.scan(host).filter(h => h.indexOf(getHostPurchasedPrefix(ns)) < 0)});
         }
     }
     return hostsConns;
@@ -87,7 +92,7 @@ export function listHostsOwned(ns, includeHome = true) {
 }
 
 export function listHostsOther(ns) {
-    return listHosts(ns, "home", []).filter(host => !listHostsOwned(ns).includes(host));
+    return listHosts(ns, "home", []).filter(host => !listHostsOwned(ns).includes(host) && !host.includes("hacknet-"));
 }
 
 export function findProcessByName(ns, name, host, kill = false) {
@@ -144,8 +149,8 @@ export function formatNumber(ns, number, formatTo = "shorthand", includeMoneySym
     }
 
     number = number.toString().replace(/[$,]/g, "");  // convert $1,000,000.000k to 1000000.000k
-    const lastChar = number.substr(-1);
-    const isShorthand = multiplier.hasOwnProperty(lastChar);
+    const lastChar = number.substr(-1),
+        isShorthand = multiplier.hasOwnProperty(lastChar);
 
     if ((formatTo === "raw" && isShorthand) ||
         (formatTo === "shorthand" && !isShorthand)) {
@@ -176,10 +181,22 @@ export function formatNumberArrayOfObjectsColumns(ns, arr, cols, formatTo = "sho
     return formattedObjArr;
 }
 
+export function formatTime(ns, ms) {
+    let tis = Math.ceil(ms / 1000),
+        s1 = 1,
+        m1 = 60 * s1,
+        h1 = 60 * m1,
+        h = Math.floor(tis / h1),
+        m = Math.floor((tis - (h * h1)) / m1),
+        s = tis - (h * h1) - (m * m1);
+
+    return `${h}h ${m}m ${s}s`;
+}
+
 export function getHomeRamReserved(ns) {
-    const watcherRamCost = ns.getScriptRam(getWatcherScript(ns));
-    const purchaseServersRamCost = ns.getScriptRam(getServerPurchaseScript(ns));
-    const findTargetsRamCost = ns.getScriptRam("findTargets.js");
+    const watcherRamCost = ns.getScriptRam(getWatcherScript(ns)),
+        purchaseServersRamCost = ns.getScriptRam(getServerPurchaseScript(ns)),
+        findTargetsRamCost = ns.getScriptRam("findTargets.js");
 
     return Math.ceil(
         (watcherRamCost * 3) + (purchaseServersRamCost) + (findTargetsRamCost * 3) + 8
@@ -197,8 +214,8 @@ export function getRandomIntInclusive(ns, min, max) {
 }
 
 export function working(ns, elemId = null) {
-    const doc = eval("document");
-    const term = doc.getElementById('terminal');
+    const doc = eval("document"),
+        term = doc.getElementById('terminal');
     if (term == undefined) {
         return;
     }
@@ -213,9 +230,9 @@ export function working(ns, elemId = null) {
 }
 
 export function play(ns, sound) {
-    const script = "play.js";
-    const ramAvail = ns.getServerMaxRam("home") - ns.getServerUsedRam("home");
-    const ramReq = ns.getScriptRam(script);
+    const script = "play.js",
+        ramAvail = ns.getServerMaxRam("home") - ns.getServerUsedRam("home"),
+        ramReq = ns.getScriptRam(script);
 
     if (ramAvail > ramReq) {
         ns.run(script, 1, sound);
@@ -223,18 +240,18 @@ export function play(ns, sound) {
 }
 
 export function showNotice(ns, message, title = "notice") {
-    const lineChar = "=";
-    const titleLine = `==[ ${title.toUpperCase()} ]==`;
-    const messageLine = `>>>  ${message}  <<<`;
-    const lineLength = (titleLine.length > messageLine.length)
-        ? titleLine.length
-        : messageLine.length;
-    const output = `WARN:
+    const lineChar = "=",
+        titleLine = `==[ ${title.toUpperCase()} ]==`,
+        messageLine = `>>>  ${message}  <<<`,
+        lineLength = (titleLine.length > messageLine.length)
+            ? titleLine.length
+            : messageLine.length,
+        output = `WARN:
     
 ${titleLine}${lineChar.repeat(lineLength - titleLine.length)}
 ${messageLine}
 ${lineChar.repeat(lineLength)}
-    `;
+        `;
     ns.tprintf(output);
 }
 

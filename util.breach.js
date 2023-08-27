@@ -1,5 +1,5 @@
 /** @param {NS} ns **/
-import * as commonUtil from "./util.common.js";
+import {listHostsConnections, showNotice, play} from "./util.common.js";
 
 const portApps = [ "BruteSSH.exe", "FTPCrack.exe", "relaySMTP.exe", "HTTPWorm.exe", "SQLInject.exe" ];
 
@@ -45,43 +45,81 @@ export async function breachHost(ns, host) {
 }
 
 export async function backdoorAll(ns) {
-    let hostsConnections = commonUtil.listHostsConnections(ns);
-    for (const [i,h] of Object.entries(hostsConnections)) {
-        ns.tprintf(`WARN: ${h.host}`);
-        await backdoorHost(ns, h.host);
-        for (const conn of h.connections) {
-            ns.tprintf(`${h.host} => ${conn}`);
-            await backdoorHost(ns, conn, h.host);
-            ns.tprintf(`INFO: Reconnecting to '${h.host}'`);
-            if (!ns.singularity.connect(h.host)) {
-                ns.tprintf("ERROR: ...failed");
-                return;
+    let hostsConnections = listHostsConnections(ns);
+    await ns.sleep(100);
+    parentHost: for (const [i,ph] of Object.entries(hostsConnections)) {
+        if (ph.host === "home") {
+            continue parentHost;
+        }
+
+        ns.tprintf(`WARN: ${ph.host}`);
+        childHost: for (const [j,ch] of Object.entries(ph.connections)) {
+            if (parseInt(j) === 0) {
+                let chServer = ns.getServer(ch);
+                if (!chServer.isConnectedTo) {
+                    if (!chServer.backdoorInstalled) {
+                        let currHost = hostsConnections[(parseInt(i)-1)];
+                        for (let ii = parseInt(i); ii > 0; ii--) {
+                            let upHost = hostsConnections[(ii-1)];
+                            if (upHost.connections.includes(currHost.host)) {
+                                if (!ns.singularity.connect(upHost.host)) {
+                                    ns.tprintf(`ERROR: ...connection to '${upHost.host}' failed [0-up]`);
+                                    continue parentHost;
+                                }
+                                ns.tprintf(`INFO: ...connection to '${upHost.host}' succeeded [0-up]`);
+                                currHost = upHost;
+                            }
+                            if (upHost.connections.includes(ch)) {
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!ns.singularity.connect(ch)) {
+                        ns.tprintf(`ERROR: ...connection to '${ch}' failed [0]`);
+                        continue parentHost;
+                    }
+                    ns.tprintf(`INFO: ...connection to '${ch}' succeeded [0]`);
+
+                } else {
+                    ns.tprintf(`INFO: ...connection to '${ch}' already established [0]`)
+                }
+                await backdoorHost(ns, ph.host);
+                continue childHost;
             }
-            ns.tprintf("INFO: ...succeeded");
+
+            ns.tprintf(`${ph.host} => ${ch}`);
+            await backdoorHost(ns, ch, ph.host);
+            if (!ns.singularity.connect(ph.host)) {
+                ns.tprintf(`ERROR: ...connection to '${ph.host}' failed [1]`);
+                continue parentHost;
+            }
+            ns.tprintf(`INFO: ...connection to '${ph.host}' succeeded [1]`);
         }
     }
     ns.singularity.connect("home");
-    commonUtil.showNotice(ns, "Backdoor processing complete");
-    commonUtil.play(ns, "trek");
+
+    await showNotice(ns, "Backdoor processing complete");
+    await play(ns, "drip");
 }
 
 export async function backdoorHost(ns, host, parent = null) {
-    ns.tprintf(`INFO: Connecting to '${host}'`);
-    if (!ns.singularity.connect(host)) {
-        ns.tprintf("ERROR: ...failed");
+    if (!await ns.singularity.connect(host)) {
+        ns.tprintf(`ERROR: ...connection to '${host}' failed [2]`);
         return;
     }
-    ns.tprintf("INFO: ...succeeded");
+    ns.tprintf(`INFO: ...connection to '${host}' succeeded [2]`);
 
     const server = ns.getServer(host);
     if (server.purchasedByPlayer ||
         server.backdoorInstalled ||
-        !server.hasAdminRights) {
+        !server.hasAdminRights ||
+        !isHackable(ns, host)) {
         return;
     }
 
-    ns.tprintf("INFO: Installing backdoor");
-    let result = await ns.installBackdoor(host);
+    ns.tprintf("INFO: ...installing backdoor");
+    let result = await ns.singularity.installBackdoor(host);
 }
 
 export function isBreachable(ns, host) {

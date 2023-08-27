@@ -1,0 +1,34 @@
+Hacking [H] / Faction Rep [R] Augmentations:
+(after all CSEC, NiteSec, The Black Hand augments)
+
+.   SmartJaw                -> BachmanAssociates
+.   PCMatrix                -> Aevum
+.   Neuregen                -> Chongqing
+
+    ENMAnalyzeEngine        -> ECorp,MegaCorp,FulcrumSecretTechnologies,NWO,Daedalus,TheCovenant,Illuminati
+    ENMCoreV3               -> ECorp,MegaCorp,FulcrumSecretTechnologies,NWO,Daedalus,TheCovenant,Illuminati
+    ENMDMA                  -> ECorp,MegaCorp,FulcrumSecretTechnologies,NWO,Daedalus,TheCovenant,Illuminati
+    Neurotrainer3           -> NWO,FourSigma
+    PowerRecirculator       -> Tetrads,TheDarkArmy,TheSyndicate,NWO
+    Xanipher                -> NWO
+
+    HiveMind                -> ECorp
+    PCDNI                   -> FourSigma,OmniTekIncorporated,ECorp,BladeIndustries
+    PCDNIOptimizer          -> FulcrumSecretTechnologies,ECorp,BladeIndustries
+
+.   FocusWire               -> BachmanAssociates,ClarkeIncorporated,FourSigma,KuaiGongInternational
+    NeuronalDensification   -> ClarkeIncorporated
+    nextSENS                -> ClarkeIncorporated
+
+    OmniTekInfoLoad         -> OmniTekIncorporated
+    Hypersight              -> BladeIndustries,KuaiGongInternational
+    PCDNINeuralNetwork      -> FulcrumSecretTechnologies
+
+    QLink                   -> Illuminati
+    SPTN97                  -> TheCovenant
+    ShadowsSimulacrum       -> TheSyndicate,TheDarkArmy,SpeakersForTheDead
+    CircadianModulator      -> SpeakersForTheDead
+
+    BigDsBigBrain           -> ?
+    CongruityImplant        -> ?
+
