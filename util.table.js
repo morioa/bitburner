@@ -21,24 +21,17 @@ export function renderTable(ns, title, data, useDom = false, replace = false) {
         ns.exit();
     }
 
-    let doc = eval("document"),
-        term = doc.getElementById("terminal") ?? null;
-
-    if (term === null) {
-        useDom = false;
-    }
-
     if (useDom) {
         let reactElem = React.createElement(
-                'li',
-                {
-                    className: "MuiListItem-root jss13034 MuiListItem-gutters MuiListItem-padding css-1578zj2 custom-table",
-                    style: {
-                        marginTop: "auto"
-                    }
-                },
-                reactTable(ns, title, data)
-            );
+            'li',
+            {
+                className: "MuiListItem-root jss13034 MuiListItem-gutters MuiListItem-padding css-1578zj2 custom-table",
+                style: {
+                    marginTop: "auto"
+                }
+            },
+            reactTable(ns, title, data)
+        );
         ns.tprintRaw(reactElem);
 
         return;

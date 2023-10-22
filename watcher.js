@@ -253,7 +253,12 @@ async function hashes(ns) {
                     }
 
                     if (!ns.hacknet.spendHashes(action, "", n)) handleError(ns, "Failed to sell hashes");
-                    ns.tprintf(`INFO: Reached hash spend threshold after ${commonUtil.formatTime(ns, getTimeDiff())} -- sold hashes ${n} times for ${money}`);
+
+                    if (pct < .25) {
+                        ns.printf(`INFO: Reached hash spend threshold after ${commonUtil.formatTime(ns, getTimeDiff())} -- sold hashes ${n} times for ${money}`);
+                    } else {
+                        ns.tprintf(`INFO: Reached hash spend threshold after ${commonUtil.formatTime(ns, getTimeDiff())} -- sold hashes ${n} times for ${money}`);
+                    }
                 }
                 else if (act === "favor") {
                     let company = ns.args[2],
