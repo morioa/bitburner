@@ -13,8 +13,9 @@ const paddingSize = 1,
  * @param title
  * @param data
  * @param useDom
+ * @param replace
  */
-export function renderTable(ns, title, data, useDom = false) {
+export function renderTable(ns, title, data, useDom = false, replace = false) {
     if (data.length === 0) {
         ns.tprintf("WARNING: No data to render");
         ns.exit();
@@ -28,33 +29,17 @@ export function renderTable(ns, title, data, useDom = false) {
     }
 
     if (useDom) {
-        let li = doc.createElement("li"),
-            table = doc.createElement("table"),
-            caption = table.createCaption(),
-            dataKeys = Object.keys(data[0]);
-
-        table.id = "custom_elem_" + getRandomIntInclusive(ns, 0,9999);
-        table.className = "jss16653 MuiTypography-root MuiTypography-body1 css-cxl1tz";
-        table.style.border = "1px solid " + tableColor;
-        table.style.borderCollapse = "collapse";
-        table.style.margin = "10px 0";
-        caption.style.borderWidth = "1px 1px 0 1px";
-        caption.style.borderStyle = "solid";
-        caption.style.borderColor = tableColor;
-        caption.style.textAlign = "left";
-        caption.style.padding = "1px 6px";
-        caption.style.color = tableColor;
-        caption.innerHTML = title.toUpperCase();
-
-        //term.insertAdjacentHTML("beforeend", "<table id='" + elemId + "' class='jss16653 MuiTypography-root MuiTypography-body1 css-cxl1tz' style=''></table>");
-
-        generateTable(ns, doc, table, data);
-        generateTableHead(ns, doc, table, dataKeys);
-
-        table.insertBefore(caption, table.firstChild);
-        li.appendChild(table);
-        term.appendChild(li);
-        li.scrollIntoView();
+        let reactElem = React.createElement(
+                'li',
+                {
+                    className: "MuiListItem-root jss13034 MuiListItem-gutters MuiListItem-padding css-1578zj2 custom-table",
+                    style: {
+                        marginTop: "auto"
+                    }
+                },
+                reactTable(ns, title, data)
+            );
+        ns.tprintRaw(reactElem);
 
         return;
     }
@@ -89,6 +74,136 @@ export function renderTable(ns, title, data, useDom = false) {
     output += drawTableBorder(ns, maxLengths);
 
     ns.tprintf(output);
+}
+
+function reactTable(ns, title, data)
+{
+    return React.createElement(
+        'table',
+        {
+            id: "custom_elem_" + getRandomIntInclusive(ns, 0,9999),
+            className: "jss16653 MuiTypography-root MuiTypography-body1 css-cxl1tz",
+            style: {
+                border: "1px solid " + tableColor,
+                borderCollapse: "collapse",
+                margin: "10px 0"
+            }
+        },
+        [
+            reactCaption(ns, title),
+            reactTableHead(ns, Object.keys(data[0])),
+            reactTableBody(ns, data)
+        ]
+    );
+}
+
+function reactCaption(ns, title)
+{
+    return React.createElement(
+        'caption',
+        {
+            style: {
+                borderWidth: "1px 1px 0 1px",
+                borderStyle: "solid",
+                borderColor: tableColor,
+                textAlign: "left",
+                padding: "1px 6px",
+                color: tableColor
+            }
+        },
+        title.toUpperCase()
+    );
+}
+
+function reactTableHead(ns, keys)
+{
+    return React.createElement(
+        'thead',
+        {},
+        React.createElement(
+            'tr',
+            {},
+            reactTableHeadCells(ns, keys)
+        )
+    );
+}
+
+function reactTableHeadCells(ns, keys)
+{
+    let reactElems = [];
+    for (const key in keys) {
+        reactElems.push(React.createElement(
+            'th',
+            {
+                className: "jss16653 MuiTypography-root MuiTypography-body1",
+                style: {
+                    border: "1px solid " + tableColor,
+                    padding: "1px 6px",
+                    color: tableColor,
+                    textAlign: "left"
+                },
+            },
+            keys[key]
+        ));
+    }
+    return reactElems;
+}
+
+function reactTableBody(ns, data)
+{
+    return React.createElement(
+        'tbody',
+        {},
+        reactTableRows(ns, data)
+    );
+}
+
+function reactTableRows(ns, data)
+{
+    let reactElems = [],
+        i = 0;
+    while (i < data.length) {
+        reactElems.push(React.createElement(
+            'tr',
+            {},
+            reactTableCells(ns, data[i])
+        ));
+        i++;
+    }
+    return reactElems;
+}
+
+function reactTableCells(ns, data)
+{
+    let reactElems = [];
+
+    for (const key in data) {
+        data[key] = data[key].toString();
+        let props = {
+            className: "jss16653 MuiTypography-root MuiTypography-body1",
+            style: {
+                borderWidth: "0 1px",
+                borderStyle: "solid",
+                borderColor: tableColor,
+                padding: "0 6px",
+                color: tableColor
+            }
+        };
+
+        if (data[key].indexOf("$") >= 0 ||
+            isNaN(data[key]) === false ||
+            data[key].match(/\$?\d+\.\d{3}[kmbtq]?/) !== null
+        ) {
+            props.style.textAlign = "right";
+        }
+
+        reactElems.push(React.createElement(
+            'td',
+            props,
+            data[key]
+        ));
+    }
+    return reactElems;
 }
 
 function drawTableTitle(ns, title) {

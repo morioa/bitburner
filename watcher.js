@@ -4,6 +4,9 @@ import * as breachUtil from "./util.breach.js";
 import * as isUtil from "./util.is.js";
 
 const pollDelay = 5000;
+let lex = Date.now(),
+    cex = null,
+    exd = null;
 
 /**
  * @param {NS} ns
@@ -32,7 +35,7 @@ export async function main(ns) {
             break;
 
         case "hashes":
-            await sellHashes(ns);
+            await hashes(ns);
             break;
 
         default:
@@ -224,35 +227,119 @@ async function stat(ns) {
     }
 }
 
-async function sellHashes(ns) {
-    let lex = Date.now(),
-        cex = null,
-        exd = null;
+async function hashes(ns) {
+    let act = (ns.args[1] ?? "").toLowerCase(),
+        allowedActs = ["sell","favor","study","gym"];
+
+    if (!allowedActs.includes(act)) handleError(ns, `'${act}' is not a valid action`);
 
     while (true) {
-        let pct = 0.9,
+        let pct = 0.0001,
             cap = ns.hacknet.hashCapacity() || 0,
             has = ns.hacknet.numHashes();
 
         if (has >= Math.floor(cap * pct)) {
-            let act = "Sell for Money",
-                cost = ns.hacknet.hashCost(act),
-                n = Math.floor(has / cost),
-                money = commonUtil.formatNumber(ns, n * 1000000, "shorthand", true);
+            try {
+                if (act === "sell") {
+                    let action = "Sell for Money",
+                        cost = ns.hacknet.hashCost(action),
+                        n = Math.floor(has / cost),
+                        money = commonUtil.formatNumber(ns, n * 1000000, "shorthand", true);
 
-            for (let i = 0; i < n; i++) {
-                ns.hacknet.spendHashes(act);
-                await ns.sleep(1);
+                    if (n < 1) {
+                        ns.printf('Insufficient hashes to sell for money -- WAITING');
+                        await ns.sleep(pollDelay);
+                        continue;
+                    }
+
+                    if (!ns.hacknet.spendHashes(action, "", n)) handleError(ns, "Failed to sell hashes");
+                    ns.tprintf(`INFO: Reached hash spend threshold after ${commonUtil.formatTime(ns, getTimeDiff())} -- sold hashes ${n} times for ${money}`);
+                }
+                else if (act === "favor") {
+                    let company = ns.args[2],
+                        action = "Company Favor",
+                        n = 0,
+                        cost = ns.hacknet.hashCost(action);
+
+                    if (cap < cost) handleError(ns, "Hash cap reached -- ENDING");
+
+                    if (has < cost) {
+                        ns.printf("Insufficient hashes to buy favor -- WAITING");
+                        await ns.sleep(pollDelay);
+                        continue;
+                    }
+
+                    while (ns.hacknet.numHashes() > ns.hacknet.hashCost(action)) {
+                        n++;
+                        if (!ns.hacknet.spendHashes(action, company)) handleError(ns, "Failed to sell hashes");
+                    }
+
+                    let favor = n * 5;
+                    ns.tprintf(`INFO: Reached hash spend threshold after ${commonUtil.formatTime(ns, getTimeDiff())} -- sold hashes ${n} times for +${favor} favor for ${company}`);
+                }
+                else if (act === "study") {
+                    let action = "Improve Studying",
+                        n = 0,
+                        cost = ns.hacknet.hashCost(action);
+
+                    if (cap < cost) handleError(ns, "Hash cap reached -- ENDING");
+
+                    if (has < cost) {
+                        ns.printf("Insufficient hashes to buy improved studying -- WAITING");
+                        await ns.sleep(pollDelay);
+                        continue;
+                    }
+
+                    while (ns.hacknet.numHashes() > ns.hacknet.hashCost(action)) {
+                        n++;
+                        if (!ns.hacknet.spendHashes(action)) handleError(ns, "Failed to sell hashes");
+                    }
+
+                    let study = n * 20;
+                    ns.tprintf(`INFO: Reached hash spend threshold after ${commonUtil.formatTime(ns, getTimeDiff())} -- sold hashes ${n} times for +${study}%% improved studying`);
+                }
+                else if (act === "gym") {
+                    let action = "Improve Gym Training",
+                        n = 0;
+
+                    if (cap < cost) handleError(ns, "Hash cap reached -- ENDING");
+
+                    if (has < cost) {
+                        ns.printf("Insufficient hashes to buy improved gym training -- WAITING");
+                        await ns.sleep(pollDelay);
+                        continue;
+                    }
+
+                    while (ns.hacknet.numHashes() > ns.hacknet.hashCost(action)) {
+                        n++;
+                        if (!ns.hacknet.spendHashes(action)) handleError(ns, "Failed to sell hashes");
+                    }
+
+                    let gym = n * 20;
+                    ns.tprintf(`INFO: Reached hash spend threshold after ${commonUtil.formatTime(ns, getTimeDiff())} -- sold hashes ${n} times for +${gym}%% improved gym training`);
+                }
+                //await commonUtil.play(ns, "drip");
             }
-
-            cex = Date.now();
-            exd = cex - lex; // in ms
-            lex = cex;
-
-            ns.tprintf(`INFO: Reached hash sell threshold after ${commonUtil.formatTime(ns, exd)} -- sold hashes ${n} times for ${money}`);
-            await commonUtil.play(ns, "drip");
+            catch (e) {
+                ns.tprintf(`ERROR: ${e.message}`);
+                ns.exit();
+            }
         }
 
         await ns.sleep(pollDelay);
     }
+}
+
+function handleError(ns, msg) {
+    ns.tprintf(`ERROR: ${msg}`);
+    commonUtil.play(ns, "whistle");
+    ns.exit();
+}
+
+function getTimeDiff() {
+    cex = Date.now();
+    exd = cex - lex; // in ms
+    lex = cex;
+
+    return exd;
 }

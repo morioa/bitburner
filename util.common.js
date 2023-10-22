@@ -182,7 +182,7 @@ export function formatNumberArrayOfObjectsColumns(ns, arr, cols, formatTo = "sho
 }
 
 export function formatTime(ns, ms) {
-    let tis = Math.ceil(ms / 1000),
+    let tis = Math.ceil(parseInt(ms) / 1000),
         s1 = 1,
         m1 = 60 * s1,
         h1 = 60 * m1,

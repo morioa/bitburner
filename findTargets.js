@@ -24,7 +24,7 @@ async function list(ns) {
 
     //ns.tprint(targetUtil.list(ns, moneyThresh, hackableOnly));
 
-    await tableUtil.renderTable(ns, "TARGETS", targetUtil.list(ns, moneyThresh, hackableOnly), true);
+    await tableUtil.renderTable(ns, "TARGETS", targetUtil.list(ns, moneyThresh, hackableOnly), true, true);
     ns.tprintf(`INFO: Listed ${(hackableOnly) ? "hackable" : "all"} hosts with at least ${commonUtil.formatNumber(ns, moneyThresh, "shorthand", true)} max money`);
 }
 

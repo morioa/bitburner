@@ -14,11 +14,11 @@ import * as isUtil from "./util.is.js";
 export async function main(ns) {
     let input;
 
-    input = [26,184,36,20,113,19,128,27,51,20,87,134,193,5,135,40,68,51,148,118,28,77,175,123,97,30,74,26,116,163,71,195,98,174,40,112,145,90,1,186,47,76,92];
-    await buySell(ns, input);
+    //input = [98,66,68,66,159,139,75,122,159,155,187,31,108,126,144,124,56,114,4,68,108,192,66,74,190,47,128,185,1,143,93,52,61,195,104,77,166,71,109,196,160];
+    //await buySell(ns, input);
 
-    //input = ["TRASH FLASH PRINT QUEUE LOGIN", 8];
-    //await caesarCipher(ns, input);
+    input = ["VIRUS CLOUD SHELL SHIFT FLASH", 8];
+    await caesarCipher(ns, input);
 
     //input = [[3,11],[21,27],[4,14],[1,4],[18,22],[8,12],[2,4],[24,34],[22,29],[11,18],[15,25]];
     //await overlappingIntervals(ns, input);
@@ -28,6 +28,7 @@ export async function main(ns) {
 
     //input = "6ERLRCn853k7M992te559AZxnRnhb508Rjuhhhhe65185941bwB";
     //input = "5aaabb450723abb";
+    //input = "wdFEoBJ646J646CHp75cEACUCUCUCUCUHMMjlWLlWLllWLlWLgjYSVjYSV5YSV5YSV5e2jvidSi";
     //await lzDecompress(ns, input);
 
     //input = ["CLOUDSHELLQUEUEPOPUPENTER", "BOOKMARK"];

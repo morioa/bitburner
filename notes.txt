@@ -1,34 +1,36 @@
-Hacking [H] / Faction Rep [R] Augmentations:
+Hacking [H] / Faction Rep [R] / Special [S] Augmentations:
 (after all CSEC, NiteSec, The Black Hand augments)
 
-.   SmartJaw                -> BachmanAssociates
-.   PCMatrix                -> Aevum
-.   Neuregen                -> Chongqing
+x   S   NeuroreceptorManager    -> TianDiHui (Chongqing)
+x   R   PCMatrix                -> Aevum
+x   H   Neuregen                -> Chongqing
+x   H   DataJack                -> Chongqing
+x   R   SmartJaw                -> BachmanAssociates (Aevum)
 
-    ENMAnalyzeEngine        -> ECorp,MegaCorp,FulcrumSecretTechnologies,NWO,Daedalus,TheCovenant,Illuminati
-    ENMCoreV3               -> ECorp,MegaCorp,FulcrumSecretTechnologies,NWO,Daedalus,TheCovenant,Illuminati
-    ENMDMA                  -> ECorp,MegaCorp,FulcrumSecretTechnologies,NWO,Daedalus,TheCovenant,Illuminati
-    Neurotrainer3           -> NWO,FourSigma
-    PowerRecirculator       -> Tetrads,TheDarkArmy,TheSyndicate,NWO
-    Xanipher                -> NWO
+    H   ENMAnalyzeEngine        -> NWO (Volhaven),ECorp,MegaCorp,FulcrumSecretTechnologies,Daedalus,TheCovenant,Illuminati
+    H   ENMCoreV3               -> NWO,ECorp,MegaCorp,FulcrumSecretTechnologies,Daedalus,TheCovenant,Illuminati
+    H   ENMDMA                  -> NWO,ECorp,MegaCorp,FulcrumSecretTechnologies,Daedalus,TheCovenant,Illuminati
+    H   Neurotrainer3           -> NWO,FourSigma
+    H   PowerRecirculator       -> NWO,Tetrads,TheDarkArmy,TheSyndicate
+    H   Xanipher                -> NWO
 
-    HiveMind                -> ECorp
-    PCDNI                   -> FourSigma,OmniTekIncorporated,ECorp,BladeIndustries
-    PCDNIOptimizer          -> FulcrumSecretTechnologies,ECorp,BladeIndustries
+    H   HiveMind                -> ECorp
+    HR  PCDNI                   -> ECorp,FourSigma,OmniTekIncorporated,BladeIndustries
+    HR  PCDNIOptimizer          -> ECorp,FulcrumSecretTechnologies,BladeIndustries
 
-.   FocusWire               -> BachmanAssociates,ClarkeIncorporated,FourSigma,KuaiGongInternational
-    NeuronalDensification   -> ClarkeIncorporated
-    nextSENS                -> ClarkeIncorporated
+x   HR  FocusWire               -> BachmanAssociates,ClarkeIncorporated,FourSigma,KuaiGongInternational
+    H   NeuronalDensification   -> ClarkeIncorporated
+    H   nextSENS                -> ClarkeIncorporated
 
-    OmniTekInfoLoad         -> OmniTekIncorporated
-    Hypersight              -> BladeIndustries,KuaiGongInternational
-    PCDNINeuralNetwork      -> FulcrumSecretTechnologies
+    H   OmniTekInfoLoad         -> OmniTekIncorporated
+    H   Hypersight              -> BladeIndustries,KuaiGongInternational
+    HR  PCDNINeuralNetwork      -> FulcrumSecretTechnologies
 
-    QLink                   -> Illuminati
-    SPTN97                  -> TheCovenant
-    ShadowsSimulacrum       -> TheSyndicate,TheDarkArmy,SpeakersForTheDead
-    CircadianModulator      -> SpeakersForTheDead
+    H   QLink                   -> Illuminati
+    H   SPTN97                  -> TheCovenant
+    R   ShadowsSimulacrum       -> TheSyndicate,TheDarkArmy,SpeakersForTheDead
 
-    BigDsBigBrain           -> ?
-    CongruityImplant        -> ?
+        CircadianModulator      -> SpeakersForTheDead
+        BigDsBigBrain           -> ?
+        CongruityImplant        -> ?
 

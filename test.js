@@ -9,7 +9,11 @@ import {getWatcherScript} from "./util.common";
 
 export async function main(ns) {
 
-    ns.tprint(commonUtil.formatTime(ns, 248542));
+    ns.tprint(`Karma: ${ns.heart.break()}`);
+
+    ns.tprint(ns.getCrimeStats('kills'));
+
+    //ns.tprint(commonUtil.formatTime(ns, 248542));
 
     /*
     const server = ns.getServer("CSEC");
