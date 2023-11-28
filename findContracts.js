@@ -9,7 +9,7 @@ export async function main(ns) {
     for (let host of targetUtil.list(ns)) {
         let hostContracts = ns.ls(host.host).filter(file => file.substr(-4) === ".cct");
         if (hostContracts.length > 0) {
-            contracts.push({"host":host.host, "available contracts":hostContracts.toString().split(",")});
+            contracts.push({"host":host.host, "available contracts":hostContracts.toString().split(","), "backdoor":host.hasBackdoor});
         }
     }
 

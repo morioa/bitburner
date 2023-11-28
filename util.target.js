@@ -2,7 +2,7 @@
 import {listHostsOther} from "./util.common.js";
 import {isHackable, isBreachable} from "./util.breach.js";
 
-export function list(ns, moneyThresh = 0, hackableOnly = 0) {
+export function list(ns, moneyThresh = 0, hackableOnly = 0, reverseMatch = 0) {
     let hosts = listHostsOther(ns),
         hostsDetails = [];
 
@@ -25,11 +25,11 @@ export function list(ns, moneyThresh = 0, hackableOnly = 0) {
             continue;
         }
 
-        if (hackableOnly && isHackable(ns, host) === false) {
-            continue;
-        }
-
-        if (hackableOnly && isBreachable(ns, host) === false) {
+        if (reverseMatch) {
+            if (hackableOnly && (!isHackable(ns, host, reverseMatch) && !isBreachable(ns, host, reverseMatch))) {
+                continue;
+            }
+        } else if (hackableOnly && (!isHackable(ns, host, reverseMatch) || !isBreachable(ns, host, reverseMatch))) {
             continue;
         }
 

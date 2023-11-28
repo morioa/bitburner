@@ -7,9 +7,8 @@ export async function main(ns) {
         ? ns.args[0]
         : 1;
 
-    if (ns.fileExists(commonUtil.getAttackLogFile(ns))) {
-        ns.rm(commonUtil.getAttackLogFile(ns));
-    }
+    // remove last attack commands file if it exists
+    commonUtil.removeLastAttackParams(ns);
 
     // start the watcher
     ns.run(commonUtil.getWatcherScript(ns), 1, "new", 1, moneyThresh);
@@ -24,10 +23,10 @@ export async function main(ns) {
     // manually via the Terminal.
 
     // launch first attack wave
-    //ns.run(commonUtil.getAttackScript(ns), 1, 4, 2, 0);
+    //ns.run(commonUtil.getAttackScript(ns), 1, 4, 2, 0, 0);
 
     // purchase scripts
-    ns.run(commonUtil.getScriptsPurchaseScript(ns));
+    //ns.run(commonUtil.getScriptsPurchaseScript(ns));
 
     // purchase servers
     // Uncomment this if in early game where you do not

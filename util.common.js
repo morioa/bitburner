@@ -36,6 +36,10 @@ export function getHostPurchasedPrefix(ns) {
     return "pserv-";
 }
 
+export function getHostPurchasedPrefixRegex(ns) {
+    return "^" + getHostPurchasedPrefix(ns) + "|hacknet-";
+}
+
 export function getLastHostPurchasedId(ns) {
     let hosts = listHostsOwned(ns, false);
 
@@ -54,7 +58,7 @@ export function getNextHostPurchasedName(ns) {
     return getHostPurchasedPrefix(ns) + getNextHostPurchasedId(ns);
 }
 
-export function listHosts(ns, host, hostList) {
+export function listHosts(ns, host = "home", hostList = []) {
     if (hostList.indexOf(host) == -1) {
         hostList.push(host);
         ns.scan(host).forEach(host => listHosts(ns, host, hostList));
@@ -63,41 +67,53 @@ export function listHosts(ns, host, hostList) {
 }
 
 export function listHostsConnections(ns, targetHost = null) {
-    let hostsConns = [];
-    for (let host of listHosts(ns, "home", [])) {
-        if (host.indexOf(getHostPurchasedPrefix(ns)) >= 0) {
+    let hostsConns = [],
+        startingHost = targetHost ?? "home";
+
+    for (let host of listHosts(ns, startingHost, [])) {
+        if (host.match(getHostPurchasedPrefixRegex(ns)) !== null) {
             continue;
         }
 
-        let server = ns.getServer(host);
-        let bd = (server.backdoorInstalled)
-            ? "Yes"
-            : "No";
+        let server = ns.getServer(host),
+            bd = (server.backdoorInstalled)
+                ? "Yes"
+                : "No";
 
         if (targetHost === null || targetHost === host) {
-            hostsConns.push({host:host, backdoor:bd, connections:ns.scan(host).filter(h => h.indexOf(getHostPurchasedPrefix(ns)) < 0)});
+            hostsConns.push({
+                "host": host,
+                "backdoor": bd,
+                "connections": ns.scan(host).filter(h => h.match(getHostPurchasedPrefixRegex(ns)) === null)
+            });
         }
     }
+
     return hostsConns;
 }
 
-export function listHostsOwned(ns, includeHome = true) {
+export function listHostsOwned(ns, includeHome = true, includeHacknets = false) {
     let hosts = [];
 
     if (includeHome) {
         hosts.push("home");
     }
 
+    if (includeHacknets) {
+        hosts = hosts.concat(listHosts(ns).filter(host => host.includes("hacknet-")));
+    }
+
     return hosts.concat(ns.getPurchasedServers());
 }
 
 export function listHostsOther(ns) {
-    return listHosts(ns, "home", []).filter(host => !listHostsOwned(ns).includes(host) && !host.includes("hacknet-"));
+    return listHosts(ns).filter(host => !listHostsOwned(ns).includes(host) && !host.includes("hacknet-"));
 }
 
 export function findProcessByName(ns, name, host, kill = false) {
     const allProcesses = ns.ps(host);
     let processes = [];
+
     for (let process of allProcesses) {
         if (process.filename === name) {
             if (kill) {
@@ -116,7 +132,7 @@ export function findProcessByName(ns, name, host, kill = false) {
 }
 
 export function formatMoney(ns, money) {
-    return "$" + parseInt(money).toString().replace(/(.)(?=(\d{3})+$)/g,'$1,');
+    return formatNumber(ns, money, "shorthand", true);
 }
 
 export function formatNumber(ns, number, formatTo = "shorthand", includeMoneySymbol = false) {
@@ -169,6 +185,7 @@ export function formatNumber(ns, number, formatTo = "shorthand", includeMoneySym
 
 export function formatNumberArrayOfObjectsColumns(ns, arr, cols, formatTo = "shorthand", includeMoneySymbol = false) {
     let formattedObjArr = [];
+
     for (let [k,v] of Object.entries(arr)) {
         for (let col of cols) {
             if (v.hasOwnProperty(col)) {
@@ -194,9 +211,9 @@ export function formatTime(ns, ms) {
 }
 
 export function getHomeRamReserved(ns) {
-    const watcherRamCost = ns.getScriptRam(getWatcherScript(ns)),
-        purchaseServersRamCost = ns.getScriptRam(getServerPurchaseScript(ns)),
-        findTargetsRamCost = ns.getScriptRam("findTargets.js");
+    const watcherRamCost = ns.getScriptRam(getWatcherScript(ns), "home"),
+        purchaseServersRamCost = ns.getScriptRam(getServerPurchaseScript(ns), "home"),
+        findTargetsRamCost = ns.getScriptRam("findTargets.js", "home");
 
     return Math.ceil(
         (watcherRamCost * 3) + (purchaseServersRamCost) + (findTargetsRamCost * 3) + 8
@@ -216,9 +233,11 @@ export function getRandomIntInclusive(ns, min, max) {
 export function working(ns, elemId = null) {
     const doc = eval("document"),
         term = doc.getElementById('terminal');
+
     if (term == undefined) {
         return;
     }
+
     if (elemId === null) {
         elemId = `custom_temp_elem_${getRandomIntInclusive(ns, 0,9999)}`;
         term.insertAdjacentHTML("beforeend", `<p id="${elemId}" class="jss16653 MuiTypography-root MuiTypography-body1 css-cxl1tz" style="color: #999999;">working...</p>`);
@@ -255,12 +274,26 @@ ${lineChar.repeat(lineLength)}
     ns.tprintf(output);
 }
 
-export function getLastAttackParams(ns) {
+export function getLastAttackParams(ns, asArray = false) {
     const params = (ns.fileExists(getAttackLogFile(ns)))
-        ? ns.read(getAttackLogFile(ns))
-        : '';
+            ? ns.read(getAttackLogFile(ns))
+            : '',
+        ap = (params === "")
+            ? {"from":null, "model":null, "target":null, "useHacknets":0}
+            : JSON.parse(params);
 
-    return (params === "")
-        ? {"from":null, "model":null, "target":null}
-        : JSON.parse(params);
+    return (asArray)
+        ? [ap.from, ap.model, ap.target, ap.useHacknets]
+        : ap;
+}
+
+export async function removeLastAttackParams(ns) {
+    if (ns.fileExists(getAttackLogFile(ns))) {
+        ns.rm(getAttackLogFile(ns));
+    }
+}
+
+export function getFunctionCallerName (offset = 1) {
+    // gets the text between whitespace for second part of stacktrace
+    return (new Error()).stack.match(/at (\S+)/g)[offset].slice(3);
 }

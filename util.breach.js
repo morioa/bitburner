@@ -3,7 +3,7 @@ import {listHostsConnections, showNotice, play} from "./util.common.js";
 
 const portApps = [ "BruteSSH.exe", "FTPCrack.exe", "relaySMTP.exe", "HTTPWorm.exe", "SQLInject.exe" ];
 
-export async function breachAll(ns, hosts, installBackdoor) {
+export async function breachAll(ns, hosts, installBackdoor = false) {
     for (const [i, host] of Object.entries(hosts.filter(h => !h.hasRootAccess))) {
         await breachHost(ns, host.host);
     }
@@ -122,12 +122,14 @@ export async function backdoorHost(ns, host, parent = null) {
     let result = await ns.singularity.installBackdoor(host);
 }
 
-export function isBreachable(ns, host) {
-    return (countOwned(ns) >= ns.getServerNumPortsRequired(host));
+export function isBreachable(ns, host, reverseMatch) {
+    const breachable = (countOwned(ns) >= ns.getServerNumPortsRequired(host));
+    return (reverseMatch) ? !breachable : breachable;
 }
 
-export function isHackable(ns, host) {
-    return (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(host));
+export function isHackable(ns, host, reverseMatch) {
+    const hackable = (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(host))
+    return (reverseMatch) ? !hackable : hackable;
 }
 
 export function isOwned(ns, app) {

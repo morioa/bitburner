@@ -100,6 +100,26 @@ export async function main(ns) {
             osc.frequency.setValueAtTime(f, startTime + (d * 4));
             osc.stop(startTime + (d * 5) + fCycleDuration);
         },
+        connect: function(ns) {
+            let d = 0.085,
+                f = 1200,
+                fCycleDuration = 1 / f;
+            gain.gain.value = 0.3;
+            osc.start(startTime);
+            osc.frequency.setValueAtTime(f/1.5, startTime);
+            osc.frequency.setValueAtTime(f, startTime + d);
+            osc.stop(startTime + (d * 2) + fCycleDuration);
+        },
+        disconnect: function(ns) {
+            let d = 0.085,
+                f = 1200,
+                fCycleDuration = 1 / f;
+            gain.gain.value = 0.3;
+            osc.start(startTime);
+            osc.frequency.setValueAtTime(f, startTime);
+            osc.frequency.setValueAtTime(f/1.5, startTime + d);
+            osc.stop(startTime + (d * 2) + fCycleDuration);
+        },
         drip: function(ns) {
             let d = 0.075,
                 f = 1200,

@@ -16,6 +16,7 @@ const attackThreshold = 30,     // Number of targets before a delay is imposed
     modelOpts = {0:"last", 1:"targeted", 2:"distributed", 3:"distributed/weighted"},
     modelDefault = 2,
     targetMoneyThreshDefault = 0,
+    useHacknetsDefault = 0,
     algos = {
         consolidated: [
             {file: "_chesterTheMolester.js", weight: 1.0}
@@ -34,76 +35,72 @@ export async function main(ns) {
     ns.disableLog("ALL");
     //ns.enableLog("exec");
 
-    let attackParams = getAttackParams(ns);
-    await ns.write(commonUtil.getAttackLogFile(ns), JSON.stringify(attackParams), "w");
+    let ap = getAttackParams(ns);
+    await ns.write(commonUtil.getAttackLogFile(ns), JSON.stringify(ap), "w");
     await ns.sleep(100);
-    await attackDistributedAll(ns, attackParams['target']);
+    await attackDistributedAll(ns, ap['target'], ap['useHacknets']);
     await ns.sleep(1);
 }
 
 function getAttackParams(ns) {
-    let from, model, target;
+    let ap = (ns.args[0] != undefined)
+        ? ns.args
+        : commonUtil.getLastAttackParams(ns, true);
 
-    if (ns.args[0] != undefined && ns.args[0] === 'help') {
+    if (ap[0] === 'help') {
         showHelp(ns);
         ns.exit();
     }
 
-    from = ns.args[0];
-    if (from == undefined) {
-        from = fromDefault;
-        ns.tprintf(`INFO: Using default 'from': ${fromDefault} (${fromOpts[fromDefault]})`);
-    } else if (!(from in fromOpts)) {
+    let [
+        from = fromDefault,
+        model = modelDefault,
+        target = targetMoneyThreshDefault,
+        useHacknets = 0
+    ] = ap;
+
+    if (!(from in fromOpts)) {
         from = fromDefault;
         ns.tprintf(`WARNING: Specified 'from' does not exist... using default: ${fromDefault} (${fromOpts[fromDefault]})`);
-    } else {
-        ns.tprintf(`INFO: Using specified 'from': ${from} (${fromOpts[from]})`);
     }
 
-    model = ns.args[1];
-    if (model == undefined) {
-        model = modelDefault;
-        ns.tprintf(`INFO: Using default 'model': ${model} (${modelOpts[model]})`);
-    } else if (!(model in modelOpts)) {
+    if (!(model in modelOpts)) {
         model = modelDefault;
         ns.tprintf(`WARNING: Specified 'model' does not exist... using default: ${model} (${modelOpts[model]})`);
-    } else {
-        ns.tprintf(`INFO: Using specified 'model': ${model} (${modelOpts[model]})`);
     }
 
-    target = ns.args[2];
     if (model > 1) {
-        if (target == undefined) {
-            target = targetMoneyThreshDefault;
-            ns.tprintf(`INFO: Using default 'target' money threshold: ${target}`);
-        } else if (isNaN(target)) {
+        if (isNaN(target)) {
             target = targetMoneyThreshDefault;
             ns.tprintf("WARNING: Individual targets ignored for the specified 'model'");
-            ns.tprintf(`INFO: Using default 'target' money threshold: ${target}`);
+            ns.tprintf(`WARNING: Using default 'target' money threshold instead: ${target}`);
         } else {
             target = Math.floor(target);
-            ns.tprintf(`INFO: Using specified 'target' money threshold: ${target}`);
         }
     } else {
         if (model === 0) {
             target = targetUtil.getLastHackableHost(ns).host;
-            ns.tprintf(`INFO: Target acquired: ${target}`);
         } else {
-            if (target == undefined || ns.serverExists(target) === false) {
+            if (ns.serverExists(target) === false) {
                 ns.tprintf(`WARNING: Specified target server does not exist: ${target}`);
                 target = targetUtil.getLastHackableHost(ns).host;
                 ns.tprintf(`WARNING: Targeting last hackable server instead: ${target}`);
-            } else {
-                ns.tprintf(`INFO: Target acquired: ${target}`);
             }
         }
     }
 
-    return {"from":from, "model":model, "target":target};
+    useHacknets = (useHacknets) ? 1 : useHacknetsDefault;
+
+    ns.tprintf(`INFO: from: ${from} (${fromOpts[from]})`);
+    ns.tprintf(`INFO: model: ${model} (${modelOpts[model]})`);
+    ns.tprintf(`INFO: target: ${target}`);
+    ns.tprintf(`INFO: useHacknets: ${useHacknets} (${(useHacknets) ? 'true' : 'false'})`);
+
+    return {"from":from, "model":model, "target":target, "useHacknets":useHacknets};
 }
 
-function getUsableHosts(ns, otherOnly = false) {
-    let hostsOwned = commonUtil.listHostsOwned(ns),
+function getUsableHosts(ns, otherOnly = false, useHacknets = false) {
+    let hostsOwned = commonUtil.listHostsOwned(ns, true, useHacknets),
         hostsOther = targetUtil.list(ns, 0, 1).map(x => x.host);
 
     if (otherOnly) {
@@ -113,8 +110,8 @@ function getUsableHosts(ns, otherOnly = false) {
     return hostsOwned.concat(hostsOther);
 }
 
-async function attackDistributedAll(ns, moneyThresh) {
-    const hosts = getUsableHosts(ns),
+async function attackDistributedAll(ns, moneyThresh, useHacknets) {
+    const hosts = getUsableHosts(ns, false, useHacknets),
         hostsOther = getUsableHosts(ns, true),
         allTargets = targetUtil.list(ns, moneyThresh, 1);
     let hostsUsedCount = 0,
@@ -129,7 +126,7 @@ async function attackDistributedAll(ns, moneyThresh) {
     for (const host of hosts) {
         // Ensure that usable hosts that are not owned are actually usable
         if (hostsOther.indexOf(host) >= 0) {
-            if (breachUtil.breachHost(ns, host) === false) {
+            if (await breachUtil.breachHost(ns, host) === false) {
                 // We should never get here, but just in case move onto the next host
                 //ns.print("Usable server '" + host + "' is not breachable -- SKIPPING");
                 continue;
@@ -200,7 +197,7 @@ Required: ${hostRamMinReq}
             }
 
             // Breach the target
-            if (breachUtil.breachHost(ns, target.host) === false) {
+            if (await breachUtil.breachHost(ns, target.host) === false) {
                 // We should never get here because it's already been determined it's breachable, but just in case...
                 //ns.print("Target server '" + target.host + "' is not breachable -- SKIPPING");
                 continue;
@@ -283,7 +280,7 @@ function showHelp(ns) {
 This script will perform attacks against hackable targets using default
 or user-specified parameters.
 
-Usage:   run ${commonUtil.getAttackScript(ns)} [from] [model] [target]
+Usage:   run ${commonUtil.getAttackScript(ns)} [from] [model] [target] [useHacknets]
 
 from     [optional] Can be the string 'help' (to show this help) or any
          integer '0-4' [0:"home", 1:"owned", 2:"purchased", 3:"other",
@@ -303,6 +300,12 @@ target   [optional] If model '0' or '1' is specified, then this must be
          Server Max Money value equal to or greater than the specified 
          target, otherwise it will default to '${targetMoneyThreshDefault}' and assume 
          all hackable targets are to be attacked.
+         
+useHacknets
+         [optional] Can be an integer '0-1' [0:"false", 1:"true"] to
+         allow the usage of purchased Hacknet servers for attacking
+         targets. This would typically be used when you no longer need
+         the hashes that they generate. Defaults to '${useHacknetsDefault}' if not passed.
  
 Examples:
 
@@ -313,7 +316,7 @@ Examples:
          run ${commonUtil.getAttackScript(ns)}
          
     To attack all hackable targets with at least $1m max money
-    using default options (most common usage):
+    from all rooted servers using a distributed attack model:
          run ${commonUtil.getAttackScript(ns)} ${fromDefault} ${modelDefault} 1000000
  
     To attack the default target from rooted servers you do not own:

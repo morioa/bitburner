@@ -3,15 +3,30 @@ import * as commonUtil from "./util.common.js";
 //import * as breachUtil from "./util.breach.js";
 //import * as targetUtil from "./util.target.js";
 import * as tableUtil from "./util.table.js";
-import {getWatcherScript} from "./util.common";
+import {getHomeRamReserved, getWatcherScript, listHosts, listHostsConnections, listHostsOwned} from "./util.common";
+import {list} from "./util.target";
 //import * as isUtil from "./util.is.js";
 //import {getRandomIntInclusive} from "./util.common.js";
 
 export async function main(ns) {
 
-    ns.tprint(`Karma: ${ns.heart.break()}`);
+    let procs = ns.ps("home");
+    procs.forEach(function (p) {
+        if (p.filename === "watcher.js" && p.args[0] === "hashes") {
+            ns.tprint(p);
+            return;
+        }
+    });
 
-    ns.tprint(ns.getCrimeStats('kills'));
+    //ns.tprint(commonUtil.listHostsConnections(ns, 'fulcrumassets'));
+
+    //ns.tprint(commonUtil.listHostsOther(ns));
+    //ns.tprint(ns.getPurchasedServers());
+    //ns.tprint(commonUtil.listHostsOwned(ns, true, true));
+    //ns.tprint(commonUtil.listHosts(ns).filter(h => h.includes("hacknet-")));
+
+    //ns.tprint(`Karma: ${ns.heart.break()}`);
+    //ns.tprint(ns.getCrimeStats('kills'));
 
     //ns.tprint(commonUtil.formatTime(ns, 248542));
 
@@ -51,32 +66,23 @@ export async function main(ns) {
     ns.tprint(params);
     */
 
-    /*
+    /* *
     // trying to get unclickable achievement
-    let win = eval("window"),
-        doc = eval("document"),
+    let doc = eval("document"),
         unc = doc.getElementById("unclickable");
 
-    let d = unc.style.display;
-    let v = unc.style.visibility;
+    unc.setAttribute('ref', 'unclickable');
+    //await ns.sleep(5000);
+    unc.style.display = "block";
+    unc.style.visibility = "visible";
+    unc.style.backgroundColor = "#00000";
+    unc.style.color = "#FF0000";
+    unc.onmousedown = () => {
+        this.style.display = "none";
+        this.style.visibility = "hidden";
+    }
 
-    unc.style.display = "none";
-    unc.style.visibility = "hidden";
-    unc.style.backgroundColor = "rgb(255,0,0)";
-    unc.style.color = "rgb(0,0,0)";
-    unc.style.zIndex = "auto";
-
-    unc.click();
-    let w = win.getComputedStyle(unc);
-
-    ns.tprint(w.display);
-    ns.tprint(w.visibility);
-    ns.tprint(unc.style.backgroundColor);
-    ns.tprint(`${w.x},${w.y}`);
-    ns.tprint(w.backgroundColor);
-    ns.tprint(w.color);
-    ns.tprint(`${w.width} x ${w.height}`);
-    */
+    /* */
 
     /*
     let homeRamMax = ns.getServerMaxRam("home");
@@ -287,4 +293,29 @@ function getCompanyRep(ns) {
 
 function getFactionRep(ns) {
     ns.tprint("Called getFactionRep");
+}
+
+function getHostsDetails(ns, hosts, scripts) {
+    const scriptsRam = scripts.reduce((acc, curr) => acc + ns.getScriptRam(curr.file), 0);
+    let hostsDetails = [];
+
+    for (let host of hosts) {
+        let server = ns.getServer(host),
+            hostDetails = {
+                "host": host,
+                "maxRam": server.maxRam
+            };
+
+        if (host === "home") {
+            hostDetails.maxRam -= getHomeRamReserved(ns);
+        }
+
+        if (hostDetails.maxRam < scriptsRam) {
+            continue;
+        }
+
+        hostsDetails.push(hostDetails);
+    }
+
+    return hostsDetails;
 }

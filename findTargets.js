@@ -17,15 +17,18 @@ export async function main(ns) {
 
 /** @param {NS} ns */
 async function list(ns) {
-    let moneyThresh = (isUtil.numberValid(ns, ns.args[0]))
-            ? ns.args[0]
+    ns.tprint(ns.args);
+    let moneyThresh = (isUtil.numberValid(ns, ns.args[1]))
+            ? ns.args[1]
             : 0,
-        hackableOnly = (isUtil.numberEqual(ns, ns.args[1], 1));
+        hackableOnly = (isUtil.numberEqual(ns, ns.args[2], 1)),
+        reverseMatch = (isUtil.numberEqual(ns, ns.args[3], 1)),
+        targets = targetUtil.list(ns, moneyThresh, hackableOnly, reverseMatch);
 
     //ns.tprint(targetUtil.list(ns, moneyThresh, hackableOnly));
 
-    await tableUtil.renderTable(ns, "TARGETS", targetUtil.list(ns, moneyThresh, hackableOnly), true, true);
-    ns.tprintf(`INFO: Listed ${(hackableOnly) ? "hackable" : "all"} hosts with at least ${commonUtil.formatNumber(ns, moneyThresh, "shorthand", true)} max money`);
+    await tableUtil.renderTable(ns, "TARGETS", targets, true, true);
+    ns.tprintf(`INFO: Listed all ${targets.length}${(hackableOnly) ? ((reverseMatch) ? " non-hackable" : " hackable") : ""} hosts with at least ${commonUtil.formatNumber(ns, moneyThresh, "shorthand", true)} max money`);
 }
 
 /**

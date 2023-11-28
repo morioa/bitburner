@@ -1,7 +1,15 @@
-import * as commonUtil from "./util.common.js";
-import * as targetUtil from "./util.target.js";
-import * as breachUtil from "./util.breach.js";
-import * as isUtil from "./util.is.js";
+import {arrayEqual, entityTypeValid, numberEqual, numberGreaterOrEqual, numberValid} from "./util.is.js";
+import {getUnbreachedHosts, list} from "./util.target.js";
+import {breachAll} from "./util.breach.js";
+import {
+    formatMoney,
+    formatNumber, formatTime,
+    getAttackScript,
+    getLastAttackParams,
+    play,
+    showNotice,
+    upperFirstLetter
+} from "./util.common.js";
 
 const pollDelay = 5000;
 let lex = Date.now(),
@@ -48,35 +56,40 @@ export async function main(ns) {
  * @returns {Promise<void>}
  */
 async function newTarget(ns) {
-    let autoAttack = isUtil.numberEqual(ns, ns.args[1], 1),
-        moneyThresh = (isUtil.numberGreaterOrEqual(ns, ns.args[2], 1000000))
-            ? ns.args[2]
-            : 1000000,
-        prevTargets = [];
+    const [
+        action,
+        autoAttack = 0,
+        moneyThresh = 1000000
+    ] = ns.args;
+    let prevTargets = [],
+        newTargets;
+
+    ns.tprintf(`INFO: Watching for new targets with at least ${formatMoney(ns, moneyThresh)} max money (auto-attack ${(autoAttack) ? "enabled" : "disabled"})`);
 
     while (true) {
-        let newTargets = targetUtil.list(ns, moneyThresh, 1).map(t => t["host"]);
-        if (!isUtil.arrayEqual(ns, prevTargets, newTargets)) {
-            commonUtil.showNotice(ns, "Watcher found new target(s)");
+        newTargets = list(ns, moneyThresh, 1).map(t => t["host"]);
+        if (!arrayEqual(ns, prevTargets, newTargets)) {
+            showNotice(ns, "Watcher found new target(s)");
             prevTargets = newTargets;
 
-            commonUtil.play(ns, "beep");
+            play(ns, "connect");
             await ns.sleep(1000);
 
-            await breachUtil.breachAll(ns, targetUtil.getUnbreachedHosts(ns));
+            await breachAll(ns, getUnbreachedHosts(ns));
 
             if (autoAttack) {
                 // use parameters from last attack log as those would
                 // likely be more relevant than the defaults since
                 // the watcher could be running for a long time
-                let ap = commonUtil.getLastAttackParams(ns),
+                let ap = getLastAttackParams(ns),
                     apFrom = (ap.from === null) ? 4 : ap.from,
                     apModel = (ap.model === null) ? 2 : ap.model,
-                    apTarget = (ap.target === null) ? moneyThresh : ap.target;
-                await ns.run(commonUtil.getAttackScript(ns), 1, apFrom, apModel, apTarget);
+                    apTarget = (ap.target === null) ? moneyThresh : ap.target,
+                    apUseHacknets = (ap.useHacknets === null) ? 0 : ap.useHacknets;
+                await ns.run(getAttackScript(ns), 1, apFrom, apModel, apTarget, apUseHacknets);
             }
 
-            if (Object.entries(targetUtil.getUnbreachedHosts(ns)).length === 0) {
+            if (Object.entries(getUnbreachedHosts(ns)).length === 0) {
                 ns.tprintf("WARNING: All available hosts and targets breached and attacked -- TERMINATING SELF");
                 ns.exit();
             }
@@ -90,9 +103,11 @@ async function newTarget(ns) {
  * @returns {Promise<void>}
  */
 async function listTargets(ns) {
-    let moneyThresh = (isUtil.numberGreaterOrEqual(ns, ns.args[1], 0))
-        ? ns.args[1]
-        : 0;
+    const [
+        action,
+        moneyThresh = 0
+    ] = ns.args;
+
     while (true) {
         await ns.run("findTargets.js", 1, moneyThresh, 1);
         await ns.sleep(pollDelay);
@@ -104,50 +119,51 @@ async function listTargets(ns) {
  * @returns {Promise<void>}
  */
 async function rep(ns) {
-    const entityType = ns.args[1],
-        entity = ns.args[2],
-        targetRep = (isUtil.numberValid(ns, ns.args[3]))
-            ? ns.args[3]
-            : 0,
-        getRep = {
-            company: ns.singularity.getCompanyRep,
-            faction: ns.singularity.getFactionRep
-        };
+    const [
+        action,
+        entityType,
+        entity,
+        targetRep = 0
+    ] = ns.args,
+    getRep = {
+        company: ns.singularity.getCompanyRep,
+        faction: ns.singularity.getFactionRep
+    };
+    let reportedInit = false,
+        entityRep, erInt,
+        erFormatted, trFormatted, drFormatted;
 
-    if (!isUtil.entityTypeValid(ns, entityType)) {
+
+    if (!entityTypeValid(ns, entityType)) {
         ns.tprintf(`ERROR: Invalid entity type: ${entityType}`);
         ns.exit();
     }
 
-    let reportedInit = false;
-
     while (true) {
-        let entityRep = getRep[entityType](entity);
+        entityRep = getRep[entityType](entity);
         if (entityRep < 0) {
             ns.tprintf(`ERROR: Invalid entity: ${entity}`);
             ns.exit();
         }
 
         if (!reportedInit) {
-            let erFormatted = commonUtil.formatNumber(ns, entityRep),
-                trFormatted = commonUtil.formatNumber(ns, targetRep),
-                drFormatted = commonUtil.formatNumber(ns, (targetRep - entityRep));
+            erFormatted = formatNumber(ns, entityRep);
+            trFormatted = formatNumber(ns, targetRep);
+            drFormatted = formatNumber(ns, (targetRep - entityRep));
             ns.tprintf(`INFO: entityRep: ${erFormatted}, targetRep: ${trFormatted}, remainingRep: ${drFormatted}`);
             reportedInit = true;
         }
 
-        ns.print(`entityRep: ${entityRep}, targetRep: ${targetRep}`);
+        erInt = Math.floor(entityRep);
+        ns.print(`entity: ${entity}, entityRep: ${erInt}, targetRep: ${targetRep}`);
         if (entityRep >= targetRep) {
-            await commonUtil.showNotice(ns, `${commonUtil.upperFirstLetter(ns, entityType)} '${entity}' target rep reached: ${commonUtil.formatNumber(ns, targetRep)}`);
-
-            // comment out the line below if it yields an error
-            // it loads singularity.connect which costs 32GB
-            await commonUtil.play(ns, "drip");
+            await showNotice(ns, `${upperFirstLetter(ns, entityType)} '${entity}' target rep reached: ${formatNumber(ns, targetRep)}`);
+            await play(ns, "drip");
             await ns.sleep(1000);
             break;
         }
 
-        ns.print("targetRep not reached... sleeping");
+        ns.print("targetRep not reached -- WAITING");
         await ns.sleep(pollDelay);
     }
 }
@@ -157,26 +173,44 @@ async function rep(ns) {
  * @returns {Promise<void>}
  */
 async function money(ns) {
-    const targetMoney = ns.args[1],
-        note = (ns.args[2] !== undefined)
-            ? ` (${ns.args[2]})`
-            : "";
+    const [
+        action,
+        targetMoney,
+        note = ""
+    ] = ns.args;
+    let noteOut = note,
+        reportedInit = false,
+        playerMoney,
+        pmFormatted, tmFormatted, dmFormatted;
 
-    if (!isUtil.numberValid(ns, targetMoney)) {
+    if (!numberValid(ns, targetMoney)) {
         ns.tprintf(`ERROR: Invalid target money entry: ${targetMoney}`);
         ns.exit();
     }
 
+    if (noteOut !== "") {
+        noteOut = ` (${noteOut})`;
+    }
+
     while (true) {
-        let playerMoney = ns.getServerMoneyAvailable("home");
-        ns.print(`playerMoney: ${playerMoney}, targetMoney: ${targetMoney}`);
+        playerMoney = ns.getServerMoneyAvailable("home");
+
+        if (!reportedInit) {
+            pmFormatted = formatNumber(ns, playerMoney);
+            tmFormatted = formatNumber(ns, targetMoney);
+            dmFormatted = formatNumber(ns, (targetMoney - playerMoney));
+            ns.tprintf(`INFO: playerMoney: ${formatMoney(ns, pmFormatted)}, targetMoney: ${formatMoney(ns, tmFormatted)}, remainingMoney: ${formatMoney(ns, dmFormatted)}`);
+            reportedInit = true;
+        }
+
+        ns.print(`playerMoney: ${formatMoney(ns, playerMoney)}, targetMoney: ${formatMoney(ns, targetMoney)}`);
         if (playerMoney >= targetMoney) {
-            await commonUtil.showNotice(ns, `Target money reached: ${commonUtil.formatMoney(ns, targetMoney)}${note}`);
-            await commonUtil.play(ns, "whistle");
+            await showNotice(ns, `Target money reached: ${formatMoney(ns, targetMoney)}${noteOut}`);
+            await play(ns, "whistle");
             ns.exit();
         }
 
-        ns.print("targetMoney not reached... sleeping");
+        ns.print("targetMoney not reached -- WAITING");
         await ns.sleep(pollDelay);
     }
 }
@@ -186,65 +220,87 @@ async function money(ns) {
  * @returns {Promise<void>}
  */
 async function stat(ns) {
-    let whichStat = ns.args[1].toLowerCase();
-    const targetSkill = (isUtil.numberValid(ns, ns.args[2]))
-        ? ns.args[2]
-        : 0;
+    const [
+        action,
+        whichStat,
+        targetSkill = 0
+    ] = ns.args;
+    let stat = whichStat.toLowerCase(),
+        currSkill;
 
-    if (whichStat.includes("hack")) {
-        whichStat = "hacking";
-    } else if (whichStat.includes("str")) {
-        whichStat = "strength";
-    } else if (whichStat.includes("def")) {
-        whichStat = "defense";
-    } else if (whichStat.includes("dex")) {
-        whichStat = "dexterity";
-    } else if (whichStat.includes("agi")) {
-        whichStat = "agility";
-    } else if (whichStat.includes("cha")) {
-        whichStat = "charisma";
+    if (stat.includes("hack")) {
+        stat = "hacking";
+    } else if (stat.includes("str")) {
+        stat = "strength";
+    } else if (stat.includes("def")) {
+        stat = "defense";
+    } else if (stat.includes("dex")) {
+        stat = "dexterity";
+    } else if (stat.includes("agi")) {
+        stat = "agility";
+    } else if (stat.includes("cha")) {
+        stat = "charisma";
     } else {
         ns.tprintf(`ERROR: Invalid stat: ${whichStat}`);
         ns.exit();
     }
 
     while (true) {
-        let currSkill = ns.getPlayer().skills[whichStat];
+        let currSkill = ns.getPlayer().skills[stat];
 
-        ns.print(`stat: ${whichStat}, targetSkill: ${targetSkill}`);
+        ns.print(`stat: ${stat}, targetSkill: ${stat}`);
         if (currSkill >= targetSkill) {
-            await commonUtil.showNotice(ns, `${commonUtil.upperFirstLetter(ns, whichStat)} target skill reached: ${targetSkill}`);
+            await showNotice(ns, `${upperFirstLetter(ns, stat)} target skill reached: ${targetSkill}`);
 
             // comment out the line below if it yields an error
             // it loads singularity.connect which costs 32GB
-            await commonUtil.play(ns, "drip");
+            await play(ns, "drip");
             await ns.sleep(1000);
             break;
         }
 
-        ns.print("targetSkill not reached... sleeping");
+        ns.print("targetSkill not reached -- WAITING");
         await ns.sleep(pollDelay);
     }
 }
 
 async function hashes(ns) {
     let act = (ns.args[1] ?? "").toLowerCase(),
-        allowedActs = ["sell","favor","study","gym"];
+        allowedActs = {
+            "sell": "Sell for Money",
+            "favor": "Company Favor",
+            "study": "Improve Studying",
+            "gym": "Improve Gym Training",
+            "contract": "Generate Coding Contract"
+        },
+        action = allowedActs[act];
 
-    if (!allowedActs.includes(act)) handleError(ns, `'${act}' is not a valid action`);
+    if (!(act in allowedActs)) handleError(ns, `'${act}' is not a valid action`);
+
+    let procs = ns.ps("home");
+    procs.forEach(function (p) {
+        if (p.filename === "watcher.js"
+            && p.args[0] === "hashes"
+            && p.pid !== ns.getRunningScript().pid
+        ) {
+            ns.kill(p.pid);
+            return;
+        }
+    });
+
+    ns.tprintf(`INFO: Using hashes: "${action}"`);
 
     while (true) {
-        let pct = 0.0001,
+        let pct = 0.000001,
             cap = ns.hacknet.hashCapacity() || 0,
-            has = ns.hacknet.numHashes();
+            has = ns.hacknet.numHashes(),
+            cost = ns.hacknet.hashCost(action),
+            n = 0;
 
         if (has >= Math.floor(cap * pct)) {
             try {
                 if (act === "sell") {
-                    let action = "Sell for Money",
-                        cost = ns.hacknet.hashCost(action),
-                        n = Math.floor(has / cost),
-                        money = commonUtil.formatNumber(ns, n * 1000000, "shorthand", true);
+                    n = Math.floor(has / cost);
 
                     if (n < 1) {
                         ns.printf('Insufficient hashes to sell for money -- WAITING');
@@ -252,19 +308,13 @@ async function hashes(ns) {
                         continue;
                     }
 
-                    if (!ns.hacknet.spendHashes(action, "", n)) handleError(ns, "Failed to sell hashes");
+                    if (!ns.hacknet.spendHashes(action, "", n)) handleError(ns, "Failed to spend hashes");
 
-                    if (pct < .25) {
-                        ns.printf(`INFO: Reached hash spend threshold after ${commonUtil.formatTime(ns, getTimeDiff())} -- sold hashes ${n} times for ${money}`);
-                    } else {
-                        ns.tprintf(`INFO: Reached hash spend threshold after ${commonUtil.formatTime(ns, getTimeDiff())} -- sold hashes ${n} times for ${money}`);
-                    }
+                    let money = formatNumber(ns, n * 1000000, "shorthand", true);
+                    ns.printf(`INFO: Reached hash spend threshold after ${formatTime(ns, getTimeDiff())} -- sold hashes ${n} times for ${money}`);
                 }
                 else if (act === "favor") {
-                    let company = ns.args[2],
-                        action = "Company Favor",
-                        n = 0,
-                        cost = ns.hacknet.hashCost(action);
+                    let company = ns.args[2];
 
                     if (cap < cost) handleError(ns, "Hash cap reached -- ENDING");
 
@@ -276,17 +326,13 @@ async function hashes(ns) {
 
                     while (ns.hacknet.numHashes() > ns.hacknet.hashCost(action)) {
                         n++;
-                        if (!ns.hacknet.spendHashes(action, company)) handleError(ns, "Failed to sell hashes");
+                        if (!ns.hacknet.spendHashes(action, company)) handleError(ns, "Failed to spend hashes");
                     }
 
                     let favor = n * 5;
-                    ns.tprintf(`INFO: Reached hash spend threshold after ${commonUtil.formatTime(ns, getTimeDiff())} -- sold hashes ${n} times for +${favor} favor for ${company}`);
+                    ns.printf(`INFO: Reached hash spend threshold after ${formatTime(ns, getTimeDiff())} -- sold hashes ${n} times for +${favor} favor for ${company}`);
                 }
                 else if (act === "study") {
-                    let action = "Improve Studying",
-                        n = 0,
-                        cost = ns.hacknet.hashCost(action);
-
                     if (cap < cost) handleError(ns, "Hash cap reached -- ENDING");
 
                     if (has < cost) {
@@ -297,16 +343,13 @@ async function hashes(ns) {
 
                     while (ns.hacknet.numHashes() > ns.hacknet.hashCost(action)) {
                         n++;
-                        if (!ns.hacknet.spendHashes(action)) handleError(ns, "Failed to sell hashes");
+                        if (!ns.hacknet.spendHashes(action)) handleError(ns, "Failed to spend hashes");
                     }
 
                     let study = n * 20;
-                    ns.tprintf(`INFO: Reached hash spend threshold after ${commonUtil.formatTime(ns, getTimeDiff())} -- sold hashes ${n} times for +${study}%% improved studying`);
+                    ns.printf(`INFO: Reached hash spend threshold after ${formatTime(ns, getTimeDiff())} -- sold hashes ${n} times for +${study}%% improved studying`);
                 }
                 else if (act === "gym") {
-                    let action = "Improve Gym Training",
-                        n = 0;
-
                     if (cap < cost) handleError(ns, "Hash cap reached -- ENDING");
 
                     if (has < cost) {
@@ -317,13 +360,29 @@ async function hashes(ns) {
 
                     while (ns.hacknet.numHashes() > ns.hacknet.hashCost(action)) {
                         n++;
-                        if (!ns.hacknet.spendHashes(action)) handleError(ns, "Failed to sell hashes");
+                        if (!ns.hacknet.spendHashes(action)) handleError(ns, "Failed to spend hashes");
                     }
 
                     let gym = n * 20;
-                    ns.tprintf(`INFO: Reached hash spend threshold after ${commonUtil.formatTime(ns, getTimeDiff())} -- sold hashes ${n} times for +${gym}%% improved gym training`);
+                    ns.printf(`INFO: Reached hash spend threshold after ${formatTime(ns, getTimeDiff())} -- sold hashes ${n} times for +${gym}%% improved gym training`);
                 }
-                //await commonUtil.play(ns, "drip");
+                else if(act === "contract") {
+                    if (cap < cost) handleError(ns, "Hash cap reached -- ENDING");
+
+                    if (has < cost) {
+                        ns.printf("Insufficient hashes to buy coding contract -- WAITING");
+                        await ns.sleep(pollDelay);
+                        continue;
+                    }
+
+                    while (ns.hacknet.numHashes() > ns.hacknet.hashCost(action)) {
+                        n++;
+                        if (!ns.hacknet.spendHashes(action)) handleError(ns, "Failed to spend hashes");
+                    }
+
+                    ns.printf(`INFO: Reached hash spend threshold after ${formatTime(ns, getTimeDiff())} -- sold hashes ${n} times for coding contracts`);
+                }
+                //await play(ns, "drip");
             }
             catch (e) {
                 ns.tprintf(`ERROR: ${e.message}`);
@@ -337,7 +396,7 @@ async function hashes(ns) {
 
 function handleError(ns, msg) {
     ns.tprintf(`ERROR: ${msg}`);
-    commonUtil.play(ns, "whistle");
+    play(ns, "whistle");
     ns.exit();
 }
 

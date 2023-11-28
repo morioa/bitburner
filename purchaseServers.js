@@ -13,7 +13,8 @@ export async function main(ns) {
 
     const attackScript = commonUtil.getAttackScript(ns),
         hackScript = commonUtil.getHackScript(ns),
-        hackScriptRamCost = commonUtil.getHackScriptRamCost(ns);
+        hackScriptRamCost = commonUtil.getHackScriptRamCost(ns),
+        autoAttack = (!ns.scriptRunning("fattack.js", "home"));
 
     let target = targetUtil.getLastHackableHost(ns).host,
         ram = defaultRam,
@@ -45,14 +46,14 @@ export async function main(ns) {
     let owned = commonUtil.listHostsOwned(ns);
     ns.print(owned);
 
-    let i = 0;
-    let iPrev = i;
-    let action = "purchase";
-    let nsfTerminal = false;
+    let i = 0,
+        iPrev = i,
+        action = "purchase",
+        nsfTerminal = false;
     while (i < ns.getPurchasedServerLimit()) {
-        let servers = ns.getPurchasedServers();
-        let hostname = commonUtil.getHostPurchasedPrefix(ns) + i;
-        let serverExists = (servers.includes(hostname));
+        let servers = ns.getPurchasedServers(),
+            hostname = commonUtil.getHostPurchasedPrefix(ns) + i,
+            serverExists = (servers.includes(hostname));
 
         ns.print(`Handling server '${hostname}'`);
         ns.print(`Server '${hostname}' ${(serverExists) ? 'exists' : 'does not exist'}`);
@@ -68,12 +69,12 @@ export async function main(ns) {
             continue;
         }
 
-        let moneyAvail = ns.getServerMoneyAvailable("home");
-        let moneyAvailVerbose = commonUtil.formatNumber(ns, moneyAvail, "shorthand", true);
-        let serverCost = (!upgrade)
-            ? ns.getPurchasedServerCost(ram)
-            : ns.getPurchasedServerUpgradeCost(hostname, ram);
-        let serverCostVerbose = commonUtil.formatNumber(ns, serverCost, "shorthand", true);
+        let moneyAvail = ns.getServerMoneyAvailable("home"),
+            moneyAvailVerbose = commonUtil.formatNumber(ns, moneyAvail, "shorthand", true),
+            serverCost = (!upgrade)
+                ? ns.getPurchasedServerCost(ram)
+                : ns.getPurchasedServerUpgradeCost(hostname, ram),
+            serverCostVerbose = commonUtil.formatNumber(ns, serverCost, "shorthand", true);
 
         // Check if we have enough money to purchase a server
         if (moneyAvail > serverCost) {
@@ -82,9 +83,8 @@ export async function main(ns) {
             //  2. Copy our hacking script onto the newly-purchased server
             //  3. Run our hacking script on the newly-purchased server with n threads
             //  4. Increment our iterator to indicate that we've bought a new server
-            if (upgrade && serverExists) {
+            if (upgrade && serverExists && autoAttack) {
                 ns.killall(hostname);
-                //ns.deleteServer(hostname);
             }
 
             if (!serverExists) {
@@ -96,7 +96,7 @@ export async function main(ns) {
                 ns.upgradePurchasedServer(hostname, ram);
             }
 
-            if (ram < useAttackRamThreshold) {
+            if (autoAttack && ram < useAttackRamThreshold) {
                 await ns.scp(hackScript, hostname);
                 ns.exec(hackScript, hostname, Math.floor(ram / commonUtil.getHackScriptRamCost(ns)), target);
             }
@@ -108,10 +108,12 @@ export async function main(ns) {
                 ns.tprint(`Insufficient funds to buy server '${hostname}' -- WAITING`);
                 nsfTerminal = true;
             }
-            if (iPrev !== i && ram >= useAttackRamThreshold) {
+            if (iPrev !== i) {
                 iPrev = i;
-                let ap = commonUtil.getLastAttackParams(ns);
-                await ns.run(attackScript, 1, ap.from, ap.model, ap.target);
+                if (autoAttack && ram >= useAttackRamThreshold) {
+                    let ap = commonUtil.getLastAttackParams(ns);
+                    await ns.run(attackScript, 1, ap.from, ap.model, ap.target);
+                }
             }
             await ns.sleep(10000);
         }
@@ -119,7 +121,7 @@ export async function main(ns) {
 
     ns.tprint(`Completed purchase of ${i} servers with ${ram} RAM`);
 
-    if (ram >= useAttackRamThreshold) {
+    if (autoAttack && ram >= useAttackRamThreshold) {
         let ap = commonUtil.getLastAttackParams(ns);
         await ns.run(attackScript, 1, ap.from, ap.model, ap.target);
     }
@@ -127,16 +129,16 @@ export async function main(ns) {
 
 /** @param {NS} ns */
 function showServerPurchaseTable(ns) {
-    let maxServers = ns.getPurchasedServerLimit();
-    let servers = ns.getPurchasedServers();
-    let server = commonUtil.getHostPurchasedPrefix(ns) + (maxServers - 1);
-    let serverExists = (servers.includes(server));
-    let maxRam = ns.getPurchasedServerMaxRam();
-    let costs = [];
+    let maxServers = ns.getPurchasedServerLimit(),
+        servers = ns.getPurchasedServers(),
+        server = commonUtil.getHostPurchasedPrefix(ns) + (maxServers - 1),
+        serverExists = (servers.includes(server)),
+        maxRam = ns.getPurchasedServerMaxRam(),
+        costs = [];
     for (let i = 1; Math.pow(2, i) <= maxRam; i++) {
-        let ram = Math.pow(2, i);
-        let serverCostOne = (!serverExists) ? ns.getPurchasedServerCost(ram) : ns.getPurchasedServerUpgradeCost(server, ram);
-        let serverCostMax = serverCostOne * maxServers;
+        let ram = Math.pow(2, i),
+            serverCostOne = (!serverExists) ? ns.getPurchasedServerCost(ram) : ns.getPurchasedServerUpgradeCost(server, ram),
+            serverCostMax = serverCostOne * maxServers;
         if (serverCostOne < 0) {
             continue;
         }
@@ -152,7 +154,6 @@ function showServerPurchaseTable(ns) {
 }
 
 export function autocomplete(data, args) {
-
     return ["help","cost",524288,1048576];
 }
 
