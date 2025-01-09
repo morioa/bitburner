@@ -3,6 +3,7 @@
  * @returns {Promise<void>}
  */
 export async function main(ns) {
+    const [whichSound = "beep"] = ns.args;
     let bufferSize = 4096,
         audio = new AudioContext(),
         osc = audio.createOscillator(),
@@ -185,8 +186,8 @@ export async function main(ns) {
         }
     };
 
-    if (ns.args[0] != undefined && play.hasOwnProperty(ns.args[0])) {
-        await play[ns.args[0]](ns);
+    if (play.hasOwnProperty(whichSound)) {
+        play[whichSound](ns);
     }
 }
 
@@ -203,4 +204,32 @@ function loadWavetable(ns, file) {
             .replace(/,]/g, ']')   // remove trailing commas before brackets
             .replace(/,}/g, '}')   // remove trailing commas before braces
     );
+}
+
+/**
+ * @param data
+ * @param args
+ * @returns {*[]}
+ */
+export function autocomplete(data, args) {
+    const t = this,
+        [whichSound = null] = args,
+        sounds = [
+            "beep",
+            "connect",
+            "disconnect",
+            "drip",
+            "siren",
+            "tone",
+            "tonelo",
+            "trek",
+            "whistle"
+        ];
+    let ac = [];
+
+    if (whichSound === null || !sounds.includes(whichSound)) {
+        ac = sounds;
+    }
+
+    return ac;
 }

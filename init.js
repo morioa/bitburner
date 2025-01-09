@@ -1,17 +1,17 @@
 /** @param {NS} ns */
-import * as commonUtil from "./util.common.js";
-import * as isUtil from "./util.is.js"
+import {getAttackScript, getWatcherScript, removeLastAttackParams} from "./util.common.js";
 
 export async function main(ns) {
-    let moneyThresh = (isUtil.numberValid(ns, ns.args[0]))
-        ? ns.args[0]
-        : 1;
+    const [moneyThresh = 1] = ns.args;
 
     // remove last attack commands file if it exists
-    commonUtil.removeLastAttackParams(ns);
+    await removeLastAttackParams(ns);
+
+    // launch first attack wave
+    await ns.run(getAttackScript(ns), 1, 4, 2, 1, 0);
 
     // start the watcher
-    ns.run(commonUtil.getWatcherScript(ns), 1, "new", 1, moneyThresh);
+    await ns.run(getWatcherScript(ns), 1, "hackable", 1, moneyThresh);
     // This tells the watcher to auto-attack when ----^
     // a new target is found, so that is why the launch
     // of the first attack wave below is commented out,
@@ -21,19 +21,4 @@ export async function main(ns) {
     // remove the last argument and uncomment the
     // launch of the first attack below or run attacks
     // manually via the Terminal.
-
-    // launch first attack wave
-    //ns.run(commonUtil.getAttackScript(ns), 1, 4, 2, 0, 0);
-
-    // purchase scripts
-    //ns.run(commonUtil.getScriptsPurchaseScript(ns));
-
-    // purchase servers
-    // Uncomment this if in early game where you do not
-    // gain funds quickly, otherwise later in the game
-    // it's best to wait to buy the servers until we
-    // have purchased all scripts from the darkweb --
-    // it's easily affordable and will yield a LOT more
-    // attackable targets quickly.
-    //ns.run(commonUtil.getServerPurchaseScript(ns));
 }

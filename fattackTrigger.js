@@ -14,69 +14,72 @@ export async function main(ns) {
             "_weaken.js",
             "fattack.js"
         ],
-        scripts = [
-            {file: "fattack.js"},
-            {file: "_fgrow.js"},
-            {file: "_fhack.js"},
-            {file: "_fweaken.js"}
-        ],
+        scripts = {
+            p: { file: "fattack.js" },
+            g: { file: "_fgrow.js" },
+            h: { file: "_fhack.js" },
+            w: { file: "_fweaken.js" }
+        },
         utils = ["util.common.js", "util.target.js"];
     let myhosts = listHostsOwned(ns, true, true),
         targets = list(ns, targetMoneyMin, 1).sort((a,b) => b.moneyMax - a.moneyMax),
         attackers = getHostsDetails(ns, myhosts, scripts).sort((a,b) => b.maxRam - a.maxRam);
 
-    if (ns.kill("watcher.js", "home", "new", 1, 1)) {  // prevent auto-attack using old attack script
-        if (ns.fileExists("attack.txt", "home")) {
-            ns.rm("attack.txt");  // remove attack config file just in case
+    if (await ns.kill("watch.js", "home", "hackable", 1, 1)) {  // prevent auto-attack using old attack script
+        if (await ns.fileExists("attack.txt", "home")) {
+            await ns.rm("attack.txt");  // remove attack config file just in case
         }
-        ns.exec("watcher.js", "home", 1, "new", 0, 1); // continue to watch for new hosts to breach
+        await ns.exec("watch.js", "home", 1, "hackable", 0, 1); // continue to watch for new hosts to breach
     }
 
-
     if (!attackRemaining) {
-        myhosts.forEach(function (host) {
-            for (let script of killScripts) {
-                ns.scriptKill(script, host);
+        for (const h of myhosts) {
+            for (const s of killScripts) {
+                await ns.scriptKill(s, h);
             }
-        });
+        }
 
-        attackers.forEach(function (a) {
+        for (const a of attackers) {
             if (a.host !== "home") {
-                for (let script of scripts) {
-                    ns.scp(script.file, a.host);
+                for (const [k, s] of Object.entries(scripts)) {
+                    await ns.scp(s.file, a.host);
                 }
 
-                for (let util of utils) {
-                    ns.scp(util, a.host);
+                for (const u of utils) {
+                    await ns.scp(u, a.host);
                 }
             }
 
             if (targets.length > 0) {
                 let target = targets.shift();
-                ns.exec(scripts[0].file, a.host, 1, target.host);
+                await ns.exec(scripts.p.file, a.host, 1, target.host);
             }
-        });
+        }
     } else {
-        ns.tprintf(`INFO: Attacking remaining hosts with at least ${formatMoney(ns, targetMoneyMin)} max money from "home"`);
+        await ns.tprintf(`INFO: Attacking remaining hosts with at least ${formatMoney(ns, targetMoneyMin)} max money from "home"`);
 
-        attackers.forEach(function (a) {
-            const procs = ns.ps(a.host);
-            procs.forEach(function (p) {
+        outer: for (const a of attackers) {
+            const procs = await ns.ps(a.host);
+            for (const p of procs) {
                 if (p.filename === "fattack.js") {
+                    await ns.tprint(p);
                     targets = targets.filter(t => t.host !== p.args[0]);
-                    return;
+                    continue outer;
                 }
-            });
-        });
+            }
+        }
 
-        targets.forEach(function (t) {
-            ns.exec(scripts[0].file, "home", 1, t.host);
-        });
+        for (const t of targets) {
+            await ns.exec(scripts.p.file, "home", 1, t.host);
+        }
     }
 }
 
-function getHostsDetails(ns, hosts, scripts) {
-    const scriptsRam = scripts.reduce((acc, curr) => acc + ns.getScriptRam(curr.file), 0);
+export function getHostsDetails(ns, hosts, scripts) {
+    const scriptsRam = ns.getScriptRam(scripts.p.file) +
+        ns.getScriptRam(scripts.g.file) +
+        ns.getScriptRam(scripts.h.file) +
+        ns.getScriptRam(scripts.w.file);
     let hostsDetails = [];
 
     for (let host of hosts) {

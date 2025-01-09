@@ -1,9 +1,13 @@
-/** @param {NS} ns **/
-import * as commonUtil from "./util.common.js";
-import * as breachUtil from "./util.breach.js";
-import * as targetUtil from "./util.target.js";
-import * as tableUtil from "./util.table.js";
-import * as isUtil from "./util.is.js";
+import {breachHost} from "./util.breach.js";
+import {
+    findProcessByName,
+    getAttackLogFile, getAttackScript,
+    getHomeRamReserved, getLastAttackParams,
+    listHostsOwned, working
+} from "./util.common.js";
+import {numberEqual, numberLess} from "./util.is.js";
+import {renderTable} from "./util.table.js";
+import {getLastHackableHost, list} from "./util.target.js";
 
 // If you find that the attack kills your game, you should adjust the attack
 // threshold to a lower value and/or bump up the delay slightly. This slows
@@ -31,21 +35,22 @@ const attackThreshold = 30,     // Number of targets before a delay is imposed
 let algoType = "loop",
     algo = algos[algoType];
 
+/** @param {NS} ns **/
 export async function main(ns) {
     ns.disableLog("ALL");
     //ns.enableLog("exec");
 
-    let ap = getAttackParams(ns);
-    await ns.write(commonUtil.getAttackLogFile(ns), JSON.stringify(ap), "w");
+    let ap = await getAttackParams(ns);
+    await ns.write(getAttackLogFile(ns), JSON.stringify(ap), "w");
     await ns.sleep(100);
     await attackDistributedAll(ns, ap['target'], ap['useHacknets']);
     await ns.sleep(1);
 }
 
-function getAttackParams(ns) {
+export async function getAttackParams(ns) {
     let ap = (ns.args[0] != undefined)
         ? ns.args
-        : commonUtil.getLastAttackParams(ns, true);
+        : getLastAttackParams(ns, true);
 
     if (ap[0] === 'help') {
         showHelp(ns);
@@ -61,47 +66,47 @@ function getAttackParams(ns) {
 
     if (!(from in fromOpts)) {
         from = fromDefault;
-        ns.tprintf(`WARNING: Specified 'from' does not exist... using default: ${fromDefault} (${fromOpts[fromDefault]})`);
+        await ns.tprintf(`WARNING: Specified 'from' does not exist... using default: ${fromDefault} (${fromOpts[fromDefault]})`);
     }
 
     if (!(model in modelOpts)) {
         model = modelDefault;
-        ns.tprintf(`WARNING: Specified 'model' does not exist... using default: ${model} (${modelOpts[model]})`);
+        await ns.tprintf(`WARNING: Specified 'model' does not exist... using default: ${model} (${modelOpts[model]})`);
     }
 
     if (model > 1) {
         if (isNaN(target)) {
             target = targetMoneyThreshDefault;
-            ns.tprintf("WARNING: Individual targets ignored for the specified 'model'");
-            ns.tprintf(`WARNING: Using default 'target' money threshold instead: ${target}`);
+            await ns.tprintf("WARNING: Individual targets ignored for the specified 'model'");
+            await ns.tprintf(`WARNING: Using default 'target' money threshold instead: ${target}`);
         } else {
             target = Math.floor(target);
         }
     } else {
         if (model === 0) {
-            target = targetUtil.getLastHackableHost(ns).host;
+            target = getLastHackableHost(ns).host;
         } else {
-            if (ns.serverExists(target) === false) {
-                ns.tprintf(`WARNING: Specified target server does not exist: ${target}`);
-                target = targetUtil.getLastHackableHost(ns).host;
-                ns.tprintf(`WARNING: Targeting last hackable server instead: ${target}`);
+            if (await ns.serverExists(target) === false) {
+                await ns.tprintf(`WARNING: Specified target server does not exist: ${target}`);
+                target = getLastHackableHost(ns).host;
+                await ns.tprintf(`WARNING: Targeting last hackable server instead: ${target}`);
             }
         }
     }
 
     useHacknets = (useHacknets) ? 1 : useHacknetsDefault;
 
-    ns.tprintf(`INFO: from: ${from} (${fromOpts[from]})`);
-    ns.tprintf(`INFO: model: ${model} (${modelOpts[model]})`);
-    ns.tprintf(`INFO: target: ${target}`);
-    ns.tprintf(`INFO: useHacknets: ${useHacknets} (${(useHacknets) ? 'true' : 'false'})`);
+    await ns.tprintf(`INFO: from: ${from} (${fromOpts[from]})`);
+    await ns.tprintf(`INFO: model: ${model} (${modelOpts[model]})`);
+    await ns.tprintf(`INFO: target: ${target}`);
+    await ns.tprintf(`INFO: useHacknets: ${useHacknets} (${(useHacknets) ? 'true' : 'false'})`);
 
     return {"from":from, "model":model, "target":target, "useHacknets":useHacknets};
 }
 
-function getUsableHosts(ns, otherOnly = false, useHacknets = false) {
-    let hostsOwned = commonUtil.listHostsOwned(ns, true, useHacknets),
-        hostsOther = targetUtil.list(ns, 0, 1).map(x => x.host);
+export async function getUsableHosts(ns, otherOnly = false, useHacknets = false) {
+    let hostsOwned = listHostsOwned(ns, true, useHacknets),
+        hostsOther = list(ns, 0, 1).map(x => x.host);
 
     if (otherOnly) {
         return hostsOther;
@@ -110,23 +115,24 @@ function getUsableHosts(ns, otherOnly = false, useHacknets = false) {
     return hostsOwned.concat(hostsOther);
 }
 
-async function attackDistributedAll(ns, moneyThresh, useHacknets) {
-    const hosts = getUsableHosts(ns, false, useHacknets),
-        hostsOther = getUsableHosts(ns, true),
-        allTargets = targetUtil.list(ns, moneyThresh, 1);
+export async function attackDistributedAll(ns, moneyThresh, useHacknets) {
+    const hosts = await getUsableHosts(ns, false, useHacknets),
+        hostsOther = await getUsableHosts(ns, true),
+        allTargets = list(ns, moneyThresh, 1);
     let hostsUsedCount = 0,
         targetsAttacked = [];
 
-    tableUtil.renderTable(ns, "TARGETS", allTargets, true);
+    renderTable(ns, "TARGETS", allTargets, true);
     await ns.sleep(1000);
-    let workingElemId = commonUtil.working(ns);
+
+    let workingElemId = working(ns);
     await ns.sleep(100);
 
     // Loop through usable hosts
     for (const host of hosts) {
         // Ensure that usable hosts that are not owned are actually usable
         if (hostsOther.indexOf(host) >= 0) {
-            if (await breachUtil.breachHost(ns, host) === false) {
+            if (await breachHost(ns, host) === false) {
                 // We should never get here, but just in case move onto the next host
                 //ns.print("Usable server '" + host + "' is not breachable -- SKIPPING");
                 continue;
@@ -136,17 +142,17 @@ async function attackDistributedAll(ns, moneyThresh, useHacknets) {
         // Kill all existing processes that match any of the attack scripts
         for (const [k,script] of Object.entries(algos)) {
             for (const file of script.map(x => x.file)) {
-                commonUtil.findProcessByName(ns, file, host, true);
+                findProcessByName(ns, file, host, true);
             }
         }
 
         // Determine how much RAM is available for use on this host and which algorithm to use
         algo = determineAlgo(ns, host);
         const hostRamReserved = (host === "home")
-                ? commonUtil.getHomeRamReserved(ns)
+                ? getHomeRamReserved(ns)
                 : 0,
-            hostRamMax = ns.getServerMaxRam(host);
-        let hostRamUsed = ns.getServerUsedRam(host),
+            hostRamMax = await ns.getServerMaxRam(host);
+        let hostRamUsed = await ns.getServerUsedRam(host),
             hostRamAvail = hostRamMax - hostRamReserved - hostRamUsed;
         const hostRamMinReq = algo.reduce((acc, curr) => acc + ns.getScriptRam(curr.file), 0)
 
@@ -155,8 +161,8 @@ async function attackDistributedAll(ns, moneyThresh, useHacknets) {
             ns.print(`Host '${host}' has no RAM and cannot be used as an attacker -- SKIPPING`);
             continue;
         } else if (hostRamAvail < hostRamMinReq) {
-            ns.tprint(`Host '${host}' does not have enough RAM -- SKIPPING`);
-            ns.tprint(`
+            await ns.tprint(`Host '${host}' does not have enough RAM -- SKIPPING`);
+            await ns.tprint(`
     Host: ${host} 
      Max: ${hostRamMax}
 Reserved: ${hostRamReserved}
@@ -197,7 +203,7 @@ Required: ${hostRamMinReq}
             }
 
             // Breach the target
-            if (await breachUtil.breachHost(ns, target.host) === false) {
+            if (await breachHost(ns, target.host) === false) {
                 // We should never get here because it's already been determined it's breachable, but just in case...
                 //ns.print("Target server '" + target.host + "' is not breachable -- SKIPPING");
                 continue;
@@ -209,7 +215,7 @@ Required: ${hostRamMinReq}
 
             // If this is the last target and there are extra threads remaining, add them to the attack pool
             //ns.print(`${i} : ${Object.entries(thisHostTargets).length - 1}`);
-            if (isUtil.numberEqual(ns, i, Object.entries(thisHostTargets).length - 1)) {
+            if (numberEqual(ns, i, Object.entries(thisHostTargets).length - 1)) {
                 // Determine if there is any threads left over to apply to the last target
                 hostRamUsed = ns.getServerUsedRam(host);
                 hostRamAvail = hostRamMax - hostRamReserved - hostRamUsed;
@@ -222,11 +228,11 @@ Required: ${hostRamMinReq}
             // Loop through each file in the chosen attack algorithm
             for (const [j, script] of Object.entries(algo)) {
 
-                if (ns.fileExists(script.file, host)) {
+                if (await ns.fileExists(script.file, host)) {
                     // The attack file exists on the host, so let's do this...
                     let fileThreads = targetThreads;
 
-                    if (isUtil.numberLess(ns, j, Object.entries(algo).length - 1)) {
+                    if (numberLess(ns, j, Object.entries(algo).length - 1)) {
                         // Make sure that less weighted attack scripts still have at least one thread
                         fileThreads = Math.floor(targetThreadsHolder * script.weight);
                         if (fileThreads === 0) {
@@ -248,7 +254,7 @@ Required: ${hostRamMinReq}
                         targetsAttacked.push(target.host);
                     }
                     //ns.print(`Host '${host}' is attacking target '${target.host}' with ${script.file} using ${fileThreads} threads`);
-                    commonUtil.findProcessByName(ns, script.file, host);
+                    findProcessByName(ns, script.file, host);
                     targetThreads -= fileThreads;
                     targetThreadsPctUsed += fileThreads / targetThreadsHolder;
                 }
@@ -262,11 +268,11 @@ Required: ${hostRamMinReq}
         }
     }
 
-    commonUtil.working(ns, workingElemId);
+    working(ns, workingElemId);
 
-    ns.tprintf(`INFO: Targets attacked: ${targetsAttacked.length}`);
-    //ns.tprint(targetsAttacked);
-    ns.tprintf(`INFO: Hosts utilized: ${hostsUsedCount}`);
+    await ns.tprintf(`INFO: Targets attacked: ${targetsAttacked.length}`);
+    //await ns.tprint(targetsAttacked);
+    await ns.tprintf(`INFO: Hosts utilized: ${hostsUsedCount}`);
 }
 
 function determineAlgo(ns, host) {
@@ -280,7 +286,7 @@ function showHelp(ns) {
 This script will perform attacks against hackable targets using default
 or user-specified parameters.
 
-Usage:   run ${commonUtil.getAttackScript(ns)} [from] [model] [target] [useHacknets]
+Usage:   run ${getAttackScript(ns)} [from] [model] [target] [useHacknets]
 
 from     [optional] Can be the string 'help' (to show this help) or any
          integer '0-4' [0:"home", 1:"owned", 2:"purchased", 3:"other",
@@ -310,20 +316,20 @@ useHacknets
 Examples:
 
     To show this help:
-         run ${commonUtil.getAttackScript(ns)} help
+         run ${getAttackScript(ns)} help
  
     To attack with default options:
-         run ${commonUtil.getAttackScript(ns)}
+         run ${getAttackScript(ns)}
          
     To attack all hackable targets with at least $1m max money
     from all rooted servers using a distributed attack model:
-         run ${commonUtil.getAttackScript(ns)} ${fromDefault} ${modelDefault} 1000000
+         run ${getAttackScript(ns)} ${fromDefault} ${modelDefault} 1000000
  
     To attack the default target from rooted servers you do not own:
-         run ${commonUtil.getAttackScript(ns)} 3
+         run ${getAttackScript(ns)} 3
  
     To attack a specified target from your home server:
-         run ${commonUtil.getAttackScript(ns)} 0 1 n00dles
+         run ${getAttackScript(ns)} 0 1 n00dles
     `;
     ns.tprintf(output);
 }

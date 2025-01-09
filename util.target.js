@@ -21,6 +21,14 @@ export function list(ns, moneyThresh = 0, hackableOnly = 0, reverseMatch = 0) {
                 "portsOpenReq":server.numOpenPortsRequired
             };
 
+        if (!isHackable(ns, host)) {
+            hostDetails["hackLevelReq"] = "[[!" + hostDetails["hackLevelReq"];
+        }
+
+        if (!isBreachable(ns, host)) {
+            hostDetails["portsOpenReq"] = "[[!" + hostDetails["portsOpenReq"];
+        }
+
         if (hostDetails["moneyMax"] < moneyThresh) {
             continue;
         }

@@ -13,7 +13,7 @@ export function getServerPurchaseScript(ns) {
 }
 
 export function getWatcherScript(ns) {
-    return "watcher.js";
+    return "watch.js";
 }
 
 export function getAttackScript(ns) {
@@ -138,6 +138,8 @@ export function formatMoney(ns, money) {
 export function formatNumber(ns, number, formatTo = "shorthand", includeMoneySymbol = false) {
     if (number == undefined) {
         return false;
+    } else if (number === Infinity) {
+        return number;
     }
 
     const multiplier = {
@@ -150,13 +152,21 @@ export function formatNumber(ns, number, formatTo = "shorthand", includeMoneySym
 
     const convert = {
         shorthand: function(ns, number) {
-            for (let [k,v] of Object.entries(multiplier)) {
-                let calcVal = number.valueOf() / v;
-                if (calcVal >= 1 || k === "k") {
-                    number = (calcVal).toFixed(3) + k;
-                    break;
+            let calcVal;
+
+            if (number.valueOf() < multiplier.k) {
+                calcVal = number.valueOf() / 1;
+                number = (calcVal).toFixed(3);
+            } else {
+                for (let [k,v] of Object.entries(multiplier)) {
+                    calcVal = number.valueOf() / v;
+                    if (calcVal >= 1 || k === "k") {
+                        number = (calcVal).toFixed(3) + k;
+                        break;
+                    }
                 }
             }
+
             return number;
         },
         raw: function(ns, number, lastChar) {
@@ -213,7 +223,7 @@ export function formatTime(ns, ms) {
 export function getHomeRamReserved(ns) {
     const watcherRamCost = ns.getScriptRam(getWatcherScript(ns), "home"),
         purchaseServersRamCost = ns.getScriptRam(getServerPurchaseScript(ns), "home"),
-        findTargetsRamCost = ns.getScriptRam("findTargets.js", "home");
+        findTargetsRamCost = ns.getScriptRam("target.js", "home");
 
     return Math.ceil(
         (watcherRamCost * 3) + (purchaseServersRamCost) + (findTargetsRamCost * 3) + 8

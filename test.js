@@ -3,20 +3,147 @@ import * as commonUtil from "./util.common.js";
 //import * as breachUtil from "./util.breach.js";
 //import * as targetUtil from "./util.target.js";
 import * as tableUtil from "./util.table.js";
-import {getHomeRamReserved, getWatcherScript, listHosts, listHostsConnections, listHostsOwned} from "./util.common";
+import {
+    formatNumber,
+    getHomeRamReserved,
+    getWatcherScript,
+    listHosts,
+    listHostsConnections,
+    listHostsOwned
+} from "./util.common";
 import {list} from "./util.target";
+import {renderTable} from "./util.table.js";
 //import * as isUtil from "./util.is.js";
 //import {getRandomIntInclusive} from "./util.common.js";
 
 export async function main(ns) {
 
+    const work = await ns.singularity.getCurrentWork();
+    await ns.tprint(work);
+    const graftingTime = await ns.grafting.getAugmentationGraftTime("BLADE-51b Tesla Armor: IPU Upgrade");
+    await ns.tprint(graftingTime);
+    await ns.tprint(graftingTime - (work.cyclesWorked * 200));
+
+
+    /*
+    const gi = ns.gang.getGangInformation(),
+        ogi = ns.gang.getOtherGangInformation(),
+        gotoWarThreshold = 0.95;
+    await ns.tprint(gi);
+    await ns.tprint(ogi);
+
+    for (const [k,v] of Object.entries(ogi)) {
+        await ns.tprint(k);
+        await ns.tprint(await ns.gang.getChanceToWinClash(k));
+    }
+    */
+
+    /*
+
+    {
+        "Slum Snakes":{
+            "power":2008.8030977444037,
+            "territory":0.1428571428571459
+        },
+        "Tetrads":{
+            "power":5745.115912717831,
+            "territory":0
+        },
+        "The Syndicate":{
+            "power":5854.467652261293,
+            "territory":0
+        },
+        "The Dark Army":{
+            "power":5787.278469816288,
+            "territory":0
+        },
+        "Speakers for the Dead":{
+            "power":3938.454423421231,
+            "territory":0
+        },
+        "NiteSec":{
+            "power":5683.584972820967,
+            "territory":0
+        },
+        "The Black Hand":{
+            "power":19067.257791915723,
+            "territory":0.8571428571428541
+        }
+    }
+
+    */
+
+    /*
+    await ns.tprint("INFO: Testing");
+
+    const [ramPct = 50] = ns.args,
+        hostRamReserved = getHomeRamReserved(ns),
+        hostRamMax = await ns.getServerMaxRam("home"),
+        hostRamUsed = await ns.getServerUsedRam("home"),
+        hostRamAvail = hostRamMax - hostRamReserved - hostRamUsed,
+        scriptRam = await ns.getScriptRam("stanek.js"),
+        threads = Math.floor((hostRamAvail / scriptRam) * (ramPct / 100));
+
+    await ns.tprint(`WARN:    RAM Pct: ${ramPct}`);
+    await ns.tprint(`WARN:  Ram Avail: ${hostRamAvail}`);
+    await ns.tprint(`WARN: Script RAM: ${scriptRam}`);
+    await ns.tprint(`WARN:    Threads: ${threads}`);
+    */
+
+    /*
+    await ns.tprint(Object.getOwnPropertyNames(this));
+    const t = this;
+
+    let methods = Object.getOwnPropertyNames(t).filter(function (p) {
+        return (typeof t[p] === "function" && !["main","autocomplete"].includes(p));
+    });
+
+    await ns.tprint(methods);
+    */
+
+    /*
+    const frags = ns.stanek.activeFragments();
+    await ns.tprint(frags);
+    for (const f of frags) {
+        if (f.limit > 1) {
+            await ns.tprintf(`Fragment ${f.id} cannot be charged -- SKIPPING`);
+            continue;
+        }
+
+        ns.tprintf(`INFO: Charging fragment ${f.id}`);
+        await ns.stanek.chargeFragment(f.x, f.y);
+
+        const fc = await ns.stanek.getFragment(f.x, f.y);
+
+        ns.tprintf(`INFO: ... now has ${fc.numCharge} charge(s)`);
+    }
+    */
+
+    /*
+    const karmaRaw = ns.heart.break();
+    let karma = (karmaRaw < 0)
+        ? Math.ceil(karmaRaw)
+        : (karmaRaw > 0)
+            ? Math.floor(karmaRaw)
+            : karmaRaw;
+
+    await ns.tprintf(karmaRaw);
+    await ns.tprintf(karma);
+
+    await ns.tprint(ns.getPurchasedServers());
+    */
+
+    //ns.tprint(ns.getBitNodeMultipliers());
+
+    /*
     let procs = ns.ps("home");
     procs.forEach(function (p) {
-        if (p.filename === "watcher.js" && p.args[0] === "hashes") {
+        if (p.filename === "watch.js" && p.args[0] === "hashes") {
             ns.tprint(p);
             return;
         }
     });
+    */
 
     //ns.tprint(commonUtil.listHostsConnections(ns, 'fulcrumassets'));
 
@@ -253,7 +380,7 @@ export async function main(ns) {
     */
 }
 
-function generateTableHead(doc, table, data) {
+export function generateTableHead(doc, table, data) {
     let thead = table.createTHead();
     let row = thead.insertRow();
     for (let key of data) {
@@ -287,15 +414,15 @@ function generateTable(doc, table, data) {
     }
 }
 
-function getCompanyRep(ns) {
+export function getCompanyRep(ns) {
     ns.tprint("Called getCompanyRep");
 }
 
-function getFactionRep(ns) {
+export function getFactionRep(ns) {
     ns.tprint("Called getFactionRep");
 }
 
-function getHostsDetails(ns, hosts, scripts) {
+export function getHostsDetails(ns, hosts, scripts) {
     const scriptsRam = scripts.reduce((acc, curr) => acc + ns.getScriptRam(curr.file), 0);
     let hostsDetails = [];
 

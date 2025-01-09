@@ -1,24 +1,21 @@
-import {formatTime, getHomeRamReserved} from "./util.common";
+import {getHomeRamReserved} from "./util.common";
 
 /** @param {NS} ns **/
 export async function main(ns) {
-    ns.disableLog("ALL");
+    await ns.disableLog("ALL");
 
     const target = ns.args[0],
-        attacker = ns.getHostname(),
+        attacker = await ns.getHostname(),
         reservedRam = (attacker === "home") ? getHomeRamReserved(ns) : 0,
-        wThreadMult = 0.05,  // lowers security level by this amt per thread
-        gThreadMult = 0.004, // raises security level by this amt per thread
-        hThreadMult = 0.002, // successful hack raises security level by this amt
-        scripts = [
-            {file: "fattack.js"},
-            {file: "_fgrow.js"},
-            {file: "_fhack.js"},
-            {file: "_fweaken.js"}
-        ],
-        gRam = ns.getScriptRam(scripts[1].file),
-        hRam = ns.getScriptRam(scripts[2].file),
-        wRam = ns.getScriptRam(scripts[3].file),
+        scripts = {
+            p: { file: "fattack.js" },
+            g: { file: "_fgrow.js",   mult: 0.004 }, // raises security level by this amt per thread
+            h: { file: "_fhack.js",   mult: 0.002 }, // successful hack raises security level by this amt
+            w: { file: "_fweaken.js", mult: 0.05  }  // lowers security level by this amt per thread
+        },
+        gRam = await ns.getScriptRam(scripts.g.file),
+        hRam = await ns.getScriptRam(scripts.h.file),
+        wRam = await ns.getScriptRam(scripts.w.file),
         nextBatchDelayOffset = 4000,
         nextBatchDelayThreshold = nextBatchDelayOffset / 2;
     let pLock = false,
@@ -34,7 +31,7 @@ export async function main(ns) {
         batchFailure = false,
         batch, batches = [];
 
-        ns.tprintf(`INFO: Attacking target ${target} from ${attacker}`);
+        await ns.tprintf(`INFO: Attacking target ${target} from ${attacker}`);
 
     outerLoop: while (true) {
         while (batches.length > 0) {
@@ -53,26 +50,26 @@ export async function main(ns) {
             break;
         }
 
-        let player = ns.getPlayer(),
-            server = ns.getServer(target),
-            usableRam = ns.getServerMaxRam(attacker) - ns.getServerUsedRam(attacker) - reservedRam,
-            nowSec = Math.floor(ns.getServerSecurityLevel(target)),
-            minSec = ns.getServerMinSecurityLevel(target),
-            nowMoney = ns.getServerMoneyAvailable(target),
-            maxMoney = ns.getServerMaxMoney(target),
+        let player = await ns.getPlayer(),
+            server = await ns.getServer(target),
+            usableRam = await ns.getServerMaxRam(attacker) - await ns.getServerUsedRam(attacker) - reservedRam,
+            nowSec = Math.floor(await ns.getServerSecurityLevel(target)),
+            minSec = await ns.getServerMinSecurityLevel(target),
+            nowMoney = await ns.getServerMoneyAvailable(target),
+            maxMoney = await ns.getServerMaxMoney(target),
             primed = (pLock || (nowSec === minSec && nowMoney === maxMoney)),
             action = (primed) ? "Attacking" : "Priming";
 
         //ns.print(server);
-        ns.print(`nowSecRaw: ${ns.getServerSecurityLevel(target)}, nowSec: ${nowSec}, minSec: ${minSec}`);
+        ns.print(`nowSecRaw: ${await ns.getServerSecurityLevel(target)}, nowSec: ${nowSec}, minSec: ${minSec}`);
         ns.print(`nowMoney: ${nowMoney}, maxMoney: ${maxMoney}`);
 
-        gPct = ns.formulas.hacking.growPercent(server, 1, player);
-        hPct = ns.formulas.hacking.hackPercent(server, player) * 100;
+        gPct = await ns.formulas.hacking.growPercent(server, 1, player);
+        hPct = await ns.formulas.hacking.hackPercent(server, player) * 100;
 
-        wTime = Math.ceil(ns.formulas.hacking.weakenTime(server, player));
-        gTime = Math.ceil(ns.formulas.hacking.growTime(server, player));
-        hTime = Math.ceil(ns.formulas.hacking.hackTime(server, player));
+        wTime = Math.ceil(await ns.formulas.hacking.weakenTime(server, player));
+        gTime = Math.ceil(await ns.formulas.hacking.growTime(server, player));
+        hTime = Math.ceil(await ns.formulas.hacking.hackTime(server, player));
 
         gThreadsMax = Math.floor(usableRam / gRam);
         hThreadsMax = Math.floor(usableRam / hRam);
@@ -80,15 +77,18 @@ export async function main(ns) {
 
         gThreads = Math.ceil(5 / (gPct - 1));
         hThreads = Math.ceil(50 / hPct);
-        wThreads1 = Math.ceil((hThreads * hThreadMult) / wThreadMult); // remediate hack
-        wThreads2 = Math.ceil((gThreads * gThreadMult) / wThreadMult); // remediate grow
+        wThreads1 = Math.ceil((hThreads * scripts.h.mult) / scripts.w.mult); // remediate hack
+        wThreads2 = Math.ceil((gThreads * scripts.g.mult) / scripts.w.mult); // remediate grow
 
         gThreadsCalc = (gThreads <= gThreadsMax) ? gThreads : gThreadsMax;
         hThreadsCalc = (hThreads <= hThreadsMax) ? hThreads : hThreadsMax;
         wThreads1Calc = (wThreads1 <= wThreadsMax) ? wThreads1 : wThreadsMax;
         wThreads2Calc = (wThreads2 <= wThreadsMax) ? wThreads2 : wThreadsMax;
 
-        //ns.print(`gThreads: ${gThreads}, hThreads: ${hThreads}, wThreads1: ${wThreads1}, wThreads2: ${wThreads2}`);
+        ns.print(`gThreads: ${gThreads}/${gThreadsMax} :: ${gThreadsCalc}`);
+        ns.print(`hThreads: ${hThreads}/${hThreadsMax} :: ${hThreadsCalc}`);
+        ns.print(`wThreads1: ${wThreads1}/${wThreadsMax} :: ${wThreads1Calc}`);
+        ns.print(`wThreads2: ${wThreads2}/${wThreadsMax} :: ${wThreads2Calc}`);
 
         wDelay1 = 0;
         wDelay2 = 2000;
@@ -101,7 +101,7 @@ export async function main(ns) {
 
         if (primed && usableRam < batchRam) {
             if (batchCounter === 0) {
-                ns.tprintf(`ERROR: Insufficient RAM to start first batch -- need ${batchRam}, have ${usableRam} -- ENDING`);
+                await ns.tprintf(`ERROR: Insufficient RAM to start first batch -- need ${batchRam}, have ${usableRam} -- ENDING [${attacker}]`);
                 ns.exit();
             } else {
                 ns.print(`Insufficient RAM to start new batch -- need ${batchRam}, have ${usableRam} -- WAITING`);
@@ -124,10 +124,10 @@ export async function main(ns) {
         if (primed) {
             pLock = true;
             batchFailure = (
-                !ns.exec(scripts[3].file, attacker, wThreads1, target, wDelay1) ||
-                !ns.exec(scripts[3].file, attacker, wThreads2, target, wDelay2) ||
-                !ns.exec(scripts[1].file, attacker, gThreads, target, gDelay) ||
-                !ns.exec(scripts[2].file, attacker, hThreads, target, hDelay)
+                !await ns.exec(scripts.w.file, attacker, wThreads1, target, wDelay1) ||
+                !await ns.exec(scripts.w.file, attacker, wThreads2, target, wDelay2) ||
+                !await ns.exec(scripts.g.file, attacker, gThreads, target, gDelay) ||
+                !await ns.exec(scripts.h.file, attacker, hThreads, target, hDelay)
             );
         } else {
             gThreads = (gThreads <= gThreadsMax) ? gThreads : gThreadsMax;
@@ -135,15 +135,15 @@ export async function main(ns) {
             wThreads2 = (wThreads2 <= wThreadsMax) ? wThreads2 : wThreadsMax;
 
             if (nowSec > minSec) {
-                wThreads1 = Math.floor((nowSec - minSec) / wThreadMult) + 2;
+                wThreads1 = Math.floor((nowSec - minSec) / scripts.w.mult) + 2;
                 wThreads1 = (wThreads1 <= wThreadsMax) ? wThreads1 : wThreadsMax;
-                batchFailure = (!ns.exec(scripts[3].file, attacker, wThreads1, target, wDelay1));
+                batchFailure = (!await ns.exec(scripts.w.file, attacker, wThreads1, target, wDelay1));
             }
 
             if (nowMoney < maxMoney) {
                 batchFailure = (
-                    /*!ns.exec(scripts[3].file, attacker, wThreads2, target, wDelay2) ||*/
-                    !ns.exec(scripts[1].file, attacker, gThreads, target, gDelay)
+                    /*!await ns.exec(scripts.w.file, attacker, wThreads2, target, wDelay2) ||*/
+                    !await ns.exec(scripts.g.file, attacker, gThreads, target, gDelay)
                 );
             }
 
@@ -151,7 +151,7 @@ export async function main(ns) {
         }
 
         if (batchFailure) {
-            ns.tprint(`ERROR: Failed to start ${action.toLowerCase()} -- ENDING`);
+            await ns.tprintf(`ERROR: Failed to start ${action.toLowerCase()} -- ENDING [${attacker}]`);
             ns.exit();
         }
 

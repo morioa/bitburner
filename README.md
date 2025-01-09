@@ -22,7 +22,7 @@ Initialize with instruction to watch and attack hackable targets with at least $
 run init.js 10000000
 ```
 
-[watcher.js](https://github.com/morioa/bitburner/blob/master/watcher.js)
+[watch.js](https://github.com/morioa/bitburner/blob/master/watch.js)
 
 The watcher script allows for monitoring various things indefinitely or until a specified criteria has been met.  I've added an audible beep for alert purposes, but that comes with quite a memory cost to support it that is not feasible to use early on with a "home" server that has very little RAM, so it will only start doing audible alerts once there is enough system memory to handle it. Until then, only visible notices will be displayed in the terminal. The watcher can now optionally remount the attack when a new target is found, which is enabled by default by the init script. While this essentially makes the game play itself (as far as the hacking goes), you still need to make sure to either create or buy the programs necessary to open ports on the target servers, otherwise you will be hamstrung by only being able to hack the very insecure and low-money servers.
 
@@ -30,18 +30,18 @@ The watcher script allows for monitoring various things indefinitely or until a 
 
 Watching for the newest hackable target
 ```
-run watcher.js new
+run watch.js hackable
 ```
 
 Watching a list of hackable targets with at least $10b server max money
 ```
-run watcher.js list 10000000000 1
+run watch.js targets 10000000000 1
 ```
 
 Watching and getting an alert when your reputation reaches 50k with the CyberSec faction
 
 ```
-run watcher.js rep faction "CyberSec" 50000
+run watch.js rep faction "CyberSec" 50000
 ```
 
 [attack.js](https://github.com/morioa/bitburner/blob/master/attack.js)

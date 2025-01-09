@@ -1,22 +1,70 @@
-/**
- * Valid solvers:
- *     buySell
- *     caesarCipher
- *     overlappingIntervals
- *     rleCompression
- *
- * @param ns
- * @returns {Promise<void>}
- */
-
-import * as isUtil from "./util.is.js";
+/** @param {NS} ns */
 import {getFunctionCallerName} from "./util.common.js";
+import {renderTable} from "./util.table.js";
+import {list} from "./util.target.js";
 
 export async function main(ns) {
+    const [action = "find"] = ns.args;
+
+    try {
+        if (typeof eval(action) !== "function") {
+            throw new Error("A valid action must be specified");
+        }
+    }
+    catch (e) {
+        await ns.tprintf(`ERROR: ${e.message}`);
+        ns.exit();
+    }
+
+    await eval(action)(ns, ns.args);
+}
+
+export async function find(ns, args) {
+    const [action] = args;
+    let contracts = [];
+
+    for (const host of list(ns)) {
+        const hostContracts = ns.ls(host.host).filter(file => file.substr(-4) === ".cct");
+        if (hostContracts.length > 0) {
+            contracts.push({"host":host.host, "available contracts":hostContracts.toString().split(","), "backdoor":host.hasBackdoor});
+        }
+    }
+
+    await renderTable(ns, "CONTRACTS", contracts, true);
+
+    /*
+    for (let [i,match] of Object.entries(contracts)) {
+        for (let [j,contract] of Object.entries(match["available contracts"])) {
+            let output = "\n" +
+                "Host:  " + match["host"] + "\n" +
+                "File:  " + contract + "\n";
+                //"Type:  " + ns.getContractType(contract, match["host"]) + "\n" +
+                //"Tries: " + ns.getNumTriesRemaining(contract, match["host"]) + "\n" +
+                //"Desc:  " + ns.getContractDescription(contract, match["host"]) + "\n" +
+                //"Data:  " + ns.getContractData(contract, match["host"]) + "\n\n";
+            ns.tprintf(output);
+        }
+    }
+    */
+}
+
+export async function solve(ns, args) {
+    const [action] = args,
+        contracts = await getContracts(ns);
     let input;
 
+    for (let contract of contracts) {
+        if (typeof this[contract.solver] !== "function") {
+            await ns.tprintf(`ERROR: Invalid solver specified: '${contract.solver}'`);
+            continue;
+        }
+
+        await ns.tprintf(`INFO: Solving '${contract.solver}' contract for host '${contract.host}'`);
+        await this[contract.solver](ns, contract.input);
+    }
+
     /* *
-    input = 23285299;
+    input = 7324615648;
     await generateIP(ns, input);
 
     /* *
@@ -73,7 +121,7 @@ export async function main(ns) {
     ];
     await uniquePaths(ns, input);
 
-    /* */
+    /* *
     input = [
         [22,49,29,13,33,47,26,24],
         [ 6,11,28,50,18, 5, 9, 3],
@@ -85,6 +133,7 @@ export async function main(ns) {
 
     /* */
 }
+
 
 // solver functions
 
@@ -115,7 +164,7 @@ export async function generateIP(ns, input) {
                     + check.substring(i, check.length);
 
                 // Check for the validity of combination
-                if (isValidIP(check)) {
+                if (await isValidIP(check)) {
                     result.push(check);
                 }
 
@@ -125,7 +174,7 @@ export async function generateIP(ns, input) {
     }
 
     summary['result'] = JSON.stringify(result);
-    showSummary(ns, summary);
+    await showSummary(ns, summary);
 }
 
 export async function buySell(ns, input) {
@@ -138,20 +187,20 @@ export async function buySell(ns, input) {
     summary['input'] = JSON.stringify(input);
 
     if (typeof input[1] === 'object') {
-        ns.tprintf("WARN: maxTrans is currently not implemented");
+        await ns.tprintf("WARN: maxTrans is currently not implemented");
         maxTrans = parseInt(input[0]);
         input = input[1];
     }
 
-    ns.tprint(`maxTrans: ${maxTrans}`);
-    ns.tprint(`input: ${input}`);
+    await ns.tprint(`maxTrans: ${maxTrans}`);
+    await ns.tprint(`input: ${input}`);
 
     let i = 0, j = 0;
     while (i < input.length) {
         switch (currAction) {
             case "buy":
-                i = findNextSmallestKey(ns, input, i);
-                j = findNextBiggestKey(ns, input, i);
+                i = await findNextSmallestKey(ns, input, i);
+                j = await findNextBiggestKey(ns, input, i);
                 if (i === j) {
                     // there is no more to buy/sell
                     //ns.tprint(`i: ${i}, j: ${j}, valAt: ${input[i]}`);
@@ -165,7 +214,7 @@ export async function buySell(ns, input) {
 
             case "sell":
             default:
-                i = findNextBiggestKey(ns, input, i);
+                i = await findNextBiggestKey(ns, input, i);
                 totalProfit += input[i];
                 bsChain.push("\nsell: " + input[i] + "; calc: " + totalProfit);
                 currAction = "buy";
@@ -178,7 +227,7 @@ export async function buySell(ns, input) {
 
     summary['chain'] = bsChain;
     summary['result'] = totalProfit;
-    showSummary(ns, summary);
+    await showSummary(ns, summary);
 }
 
 export async function caesarCipher(ns, input) {
@@ -204,7 +253,7 @@ export async function caesarCipher(ns, input) {
     }
 
     summary['result'] = output;
-    showSummary(ns, summary);
+    await showSummary(ns, summary);
 }
 
 export async function overlappingIntervals(ns, input) {
@@ -258,7 +307,7 @@ export async function overlappingIntervals(ns, input) {
 
         if (JSON.stringify(input) === JSON.stringify(output)) {
             summary['result'] = JSON.stringify(output);
-            showSummary(ns, summary);
+            await showSummary(ns, summary);
             return;
         }
 
@@ -302,7 +351,7 @@ export async function rleCompression(ns, input) {
     }
 
     summary['result'] = output;
-    showSummary(ns, summary);
+    await showSummary(ns, summary);
 }
 
 export async function lzDecompress(ns, input) {
@@ -315,7 +364,7 @@ export async function lzDecompress(ns, input) {
 
     for (let i = 0; i < input.length; i++) {
         L = parseInt(input.charAt(i));
-        //ns.tprint(`L: ${L}`);
+        //await ns.tprint(`L: ${L}`);
 
         if (L === 0) {
             readNext = !readNext;
@@ -324,14 +373,14 @@ export async function lzDecompress(ns, input) {
 
         if (readNext) {
             op = input.substr(i+1, L);
-            //ns.tprint(`op: ${op}`);
+            //await ns.tprint(`op: ${op}`);
             i += L;
         } else {
             rewind = parseInt(input.charAt(i+1));
             rewindTo = output.length - rewind;
 
-            //ns.tprint(`rewind: ${rewind}`);
-            //ns.tprint(`rewindTo: ${rewindTo}`);
+            //await ns.tprint(`rewind: ${rewind}`);
+            //await ns.tprint(`rewindTo: ${rewindTo}`);
 
             if (L > rewind) {
                 op = output.substring(rewindTo, output.length).repeat(L).substr(0, L);
@@ -349,11 +398,18 @@ export async function lzDecompress(ns, input) {
     }
 
     summary['result'] = output;
-    showSummary(ns, summary);
+    await showSummary(ns, summary);
 }
 
 export async function lzCompress(ns, input) {
+    let summary = [];
 
+    summary["input"] = input;
+
+
+
+    summary["result"] = summary["input"];
+    await showSummary(ns, summary);
 }
 
 export async function vCipherDecrypt(ns, input) {
@@ -383,7 +439,7 @@ export async function vCipherDecrypt(ns, input) {
             resLoc = ptLoc + kwLoc;
 
         /*
-        ns.tprint({
+        await ns.tprint({
             "ptChar": ptChar,
             "kwChar": kwChar,
             "ptLoc": ptLoc,
@@ -399,7 +455,7 @@ export async function vCipherDecrypt(ns, input) {
         res += ab.charAt(resLoc);
 
         /*
-        ns.tprint({
+        await ns.tprint({
             "resLoc_recalc": resLoc,
             "res": res
         });
@@ -407,7 +463,7 @@ export async function vCipherDecrypt(ns, input) {
     }
 
     summary['result'] = res;
-    showSummary(ns, summary);
+    await showSummary(ns, summary);
 }
 
 export async function maxPrimeFactor(ns, input) {
@@ -439,7 +495,7 @@ export async function maxPrimeFactor(ns, input) {
     }
 
     summary['result'] = (n > 4) ? n : maxPrime;
-    showSummary(ns, summary);
+    await showSummary(ns, summary);
 }
 
 export async function spiralizeMatrix(ns, input) {
@@ -453,6 +509,7 @@ export async function spiralizeMatrix(ns, input) {
         result = [];
 
     summary['input'] = JSON.stringify(input);
+    await ns.print(summary['input']);
 
     while (usedXY.indexOf(y + "," + x) === -1) {
         result.push(input[y][x]);
@@ -462,12 +519,14 @@ export async function spiralizeMatrix(ns, input) {
         currY = y;
 
         do {
+            await ns.print(`direction: ${d}, x: ${x}, y: ${y}`);
+
             if (d === "r") {
                 nextX = x + 1;
                 if (nextX <= xMax && usedXY.indexOf(y + "," + nextX) === -1) {
                     x++;
                 } else {
-                    d = nextStr(ds, d);
+                    d = await nextStr(ds, d);
                     yMin++;
                 }
             }
@@ -477,7 +536,7 @@ export async function spiralizeMatrix(ns, input) {
                 if (nextY <= yMax && usedXY.indexOf(nextY + "," + x) === -1) {
                     y++;
                 } else {
-                    d = nextStr(ds, d);
+                    d = await nextStr(ds, d);
                     xMax--;
                 }
             }
@@ -487,7 +546,7 @@ export async function spiralizeMatrix(ns, input) {
                 if (nextX >= xMin && usedXY.indexOf(y + "," + nextX) === -1) {
                     x--;
                 } else {
-                    d = nextStr(ds, d);
+                    d = await nextStr(ds, d);
                     yMax--;
                 }
             }
@@ -497,7 +556,7 @@ export async function spiralizeMatrix(ns, input) {
                 if (nextY >= yMin && usedXY.indexOf(nextY + "," + x) === -1) {
                     y--;
                 } else {
-                    d = nextStr(ds, d);
+                    d = await nextStr(ds, d);
                     xMin++;
                 }
             }
@@ -509,7 +568,7 @@ export async function spiralizeMatrix(ns, input) {
     }
 
     summary['result'] = JSON.stringify(result);
-    showSummary(ns, summary);
+    await showSummary(ns, summary);
 }
 
 export async function hammingBinToInt(ns, input) {
@@ -522,24 +581,24 @@ export async function totalWaysToSum(ns, input) {
 
     summary['input'] = input;
     summary['result'] = count;
-    showSummary(ns, summary);
+    await showSummary(ns, summary);
 }
 
 export async function uniquePaths(ns, input) {
     let summary = [],
         r = input.length,
         c = input[0].length,
-        res = uniquePathHelper(0, 0, r, c, input);
+        res = uniquePathHelper(ns, 0, 0, r, c, input);
 
     summary['input'] = JSON.stringify(input);
     summary['result'] = res;
-    showSummary(ns, summary);
+    await showSummary(ns, summary);
 }
 
 
 // support functions
 
-function isValidIP(ip) {
+export async function isValidIP(ip) {
     // Splitting by "."
     let ips = [],
         ex = "";
@@ -574,7 +633,7 @@ function isValidIP(ip) {
     return true;
 }
 
-function findNextSmallestKey(ns, data, startFrom) {
+export async function findNextSmallestKey(ns, data, startFrom) {
     for (let i = startFrom; i <= data.length - 1; i++) {
         if (data[i] < data[i + 1] || i === data.length - 1) {
             return i;
@@ -583,7 +642,7 @@ function findNextSmallestKey(ns, data, startFrom) {
     return startFrom;
 }
 
-function findNextBiggestKey(ns, data, startFrom) {
+export async function findNextBiggestKey(ns, data, startFrom) {
     for (let i = startFrom; i <= data.length - 1; i++) {
         if (data[i] > data[i + 1] || i === data.length - 1) {
             return i;
@@ -592,12 +651,12 @@ function findNextBiggestKey(ns, data, startFrom) {
     return startFrom;
 }
 
-function nextStr(str, currStr) {
+export async function nextStr(str, currStr) {
     const currIdx = str.indexOf(currStr);
     return (currIdx + 1 === str.length) ? str[0] : str[currIdx + 1];
 }
 
-function numberOfWays(N, K) {
+export function numberOfWays(N, K) {
     // Base case
     if (N == 0) return 1;
     if (N < 0 || K <= 0) return 0;
@@ -606,7 +665,7 @@ function numberOfWays(N, K) {
     return numberOfWays(N - K, K) + numberOfWays(N, K - 1);
 }
 
-function generateGrid(x, y) {
+export async function generateGrid(x, y) {
     let grid = [];
 
     for (let r = 0; r < y; r++) {
@@ -619,7 +678,7 @@ function generateGrid(x, y) {
     return grid;
 }
 
-function uniquePathHelper(i, j, r, c, A) {
+export function uniquePathHelper(ns, i, j, r, c, A) {
     // boundary condition or constraints
     if(i == r || j == c)
         return 0;
@@ -631,10 +690,10 @@ function uniquePathHelper(i, j, r, c, A) {
     if(i == r-1 && j == c-1)
         return 1;
 
-    return uniquePathHelper(i+1, j, r, c, A) + uniquePathHelper(i, j+1, r, c, A);
+    return uniquePathHelper(ns, i+1, j, r, c, A) + uniquePathHelper(ns, i, j+1, r, c, A);
 }
 
-function showSummary(ns, summary) {
+export async function showSummary(ns, summary) {
     const func = getFunctionCallerName(2),
         lineChar = "=",
         titleLine = `==[ ${func} ]==`,
@@ -655,5 +714,18 @@ function showSummary(ns, summary) {
 ${titleLine}${lineChar.repeat(lineLength - titleLine.length)}
 ${summaryOutput}
 `;
-    ns.tprintf(output);
+    await ns.tprintf(output);
 }
+
+export async function getContracts(ns) {
+    return [
+        {
+            host: "n00dles",
+            solver: "generateIP",
+            input: "7324615648"
+        }
+    ];
+}
+
+/*
+*/

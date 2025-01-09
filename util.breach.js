@@ -3,13 +3,22 @@ import {listHostsConnections, showNotice, play} from "./util.common.js";
 
 const portApps = [ "BruteSSH.exe", "FTPCrack.exe", "relaySMTP.exe", "HTTPWorm.exe", "SQLInject.exe" ];
 
-export async function breachAll(ns, hosts, installBackdoor = false) {
+export async function breachAll(ns, args) {
+    const [
+        hosts,
+        installBackdoor = 0,
+        includeWD = 0
+    ] = args;
+
     for (const [i, host] of Object.entries(hosts.filter(h => !h.hasRootAccess))) {
         await breachHost(ns, host.host);
     }
 
     if (installBackdoor) {
-        await backdoorAll(ns);
+        await backdoorAll(ns, includeWD);
+    } else {
+        await showNotice(ns, "Breach processing complete");
+        await play(ns, "drip");
     }
 }
 
@@ -44,8 +53,9 @@ export async function breachHost(ns, host) {
     return ns.hasRootAccess(host);
 }
 
-export async function backdoorAll(ns) {
-    let hostsConnections = listHostsConnections(ns);
+export async function backdoorAll(ns, includeWD) {
+    const hostsConnections = listHostsConnections(ns),
+        wdHost = "w0r1d_d43m0n";
     await ns.sleep(100);
     parentHost: for (const [i,ph] of Object.entries(hostsConnections)) {
         if (ph.host === "home") {
@@ -84,12 +94,20 @@ export async function backdoorAll(ns) {
                 } else {
                     ns.tprintf(`INFO: ...connection to '${ch}' already established [0]`)
                 }
-                await backdoorHost(ns, ph.host);
+                if (!includeWD && ph.host === wdHost) {
+                    ns.tprintf(`WARN: Excluding ${wdHost}`);
+                } else {
+                    await backdoorHost(ns, ph.host);
+                }
                 continue childHost;
             }
 
             ns.tprintf(`${ph.host} => ${ch}`);
-            await backdoorHost(ns, ch, ph.host);
+            if (!includeWD && ch === wdHost) {
+                ns.tprintf(`WARN: Excluding ${wdHost}`);
+            } else {
+                await backdoorHost(ns, ch, ph.host);
+            }
             if (!ns.singularity.connect(ph.host)) {
                 ns.tprintf(`ERROR: ...connection to '${ph.host}' failed [1]`);
                 continue parentHost;
